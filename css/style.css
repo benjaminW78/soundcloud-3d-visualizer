@@ -137,8 +137,8 @@ a:hover, a:active {
     border: none;
 }
 #player {
-    display: inline-block;
-    
+    display: inline-block!important;
+
     width: 95%;
 }
 #messageBox {
