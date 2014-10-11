@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+<script src='vendor/three.js/build/three.min.js'></script>
+<script src='vendor/three.js/examples/js/controls/OrbitControls.js'></script>
+<body style='margin: 0px; overflow: hidden; text-align:center;'>
+
+<audio id="myAudio" src="Numb.ogg"></audio>
+
+<div style='position: absolute; top: 0px; width: 100%;font-family:arial; font-weight: bolder; padding-top: 5px;'>
+    <a href="https://github.com/jeromeetienne/threejsboilerplate" target="_blank">Boilerplate</a>
+    for
+    <a href="http://threejs.org" target="_blank">three.js</a>
+    - works on desktop and mobile
+
+</div>
+    <div id="controlPanel" class="hidden">
+    <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
+    <div id="trackInfoPanel" class="hidden">
+        <img id="infoImage" src="">
+        <div id="infoArtist"></div>
+        <div id="infoTrack"></div>
+    </div>
+    <div id="playerControls">
+        <form id="form">
+            <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
+            <button type="submit" id="submit"><i class="icon-play"></i></button><br>
+        </form>
+        <audio id="player" controls="" autoplay="true" preload="auto" autobuffer="true"></audio>
+    </div>
+</div>
+
+<div id="messageBox" class="hidden">
+<script src="//connect.soundcloud.com/sdk.js"></script>
+<script>
+    //////////////////////////////////////////////////////////////////////////////////
+    //      Init
+    //////////////////////////////////////////////////////////////////////////////////
+    var particleCount = 300;
+    
+    /*********************************************************************************
+    *SOUNDCLOUD CLASS
+    *********************************************************************************/
+    /**
+ * Makes a request to the Soundcloud API and returns the JSON data.
+ */
+
+var SoundCloudAudioSource = function(player) {
+    var self = this;
+    var analyser;
+    var audioCtx = new (window.AudioContext || window.webkitAudioContext);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    var source = audioCtx.createMediaElementSource(player);
+    source.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    this.sampleAudioStream = function() {
+        analyser.getByteFrequencyData(self.streamData);
+        // calculate an overall volume value
+        var total = 0;
+        for (var i = 0; i < 80; i++) { // get the volume from the first 80 bins, else it gets too loud with treble
+            total += self.streamData[i];
+        }
+        self.volume = total;
+    };
+    // setInterval(sampleAudioStream, 20);
+    // // public properties and methods
+    this.volume = 0;
+    this.streamData = new Uint8Array(particleCount);
+    this.playStream = function(streamUrl) {
+        // get the input stream from the audio element
+        player.addEventListener('ended', function(){
+            self.directStream('coasting');
+        });
+        player.setAttribute('src', streamUrl);
+        player.play();
+    }
+};
+var SoundcloudLoader = function(player,uiUpdater) {
+    var self = this;
+    var client_id = "42ab05e4323be426e3128b784ba36c95"; // to get an ID go to http://developers.soundcloud.com/
+    this.sound = {};
+    this.streamUrl = "";
+    this.errorMessage = "";
+    this.player = player;
+    // this.uiUpdater = uiUpdater;
+
+    /**
+     * Loads the JSON stream data object from the URL of the track (as given in the location bar of the browser when browsing Soundcloud),
+     * and on success it calls the callback passed to it (for example, used to then send the stream_url to the audiosource object).
+     * @param track_url
+     * @param callback
+     */
+    this.loadStream = function(track_url, successCallback, errorCallback) {
+        SC.initialize({
+            client_id: client_id
+        });
+        SC.get('/resolve', { url: track_url ,allow_redirects:false}, function(sound) {
+            if (sound.errors) {
+                self.errorMessage = "";
+                for (var i = 0; i < sound.errors.length; i++) {
+                    self.errorMessage += sound.errors[i].error_message + '<br>';
+                }
+                self.errorMessage += 'Make sure the URL has the correct format: https://soundcloud.com/user/title-of-the-track';
+                errorCallback();
+            } else {
+
+                if(sound.kind=="playlist"){
+                    self.sound = sound;
+                    self.streamPlaylistIndex = 0;
+                    self.streamUrl = function(){
+                        return sound.tracks[self.streamPlaylistIndex].stream_url + '?client_id=' + client_id+"&allow_redirects=false";
+                    }
+                    successCallback();
+                }else{
+                    self.sound = sound;
+                    self.streamUrl = function(){ return sound.stream_url + '?client_id=' + client_id+"&allow_redirects=false"; };
+
+                    successCallback();
+                }
+            }
+        });
+    };
+
+
+    this.directStream = function(direction){
+        if(direction=='toggle'){
+            if (this.player.paused) {
+                this.player.play();
+            } else {
+                this.player.pause();
+            }
+        }
+        else if(this.sound.kind=="playlist"){
+            if(direction=='coasting') {
+                this.streamPlaylistIndex++;
+            }else if(direction=='forward') {
+                if(this.streamPlaylistIndex>=this.sound.track_count-1) this.streamPlaylistIndex = 0;
+                else this.streamPlaylistIndex++;
+            }else{
+                if(this.streamPlaylistIndex<=0) this.streamPlaylistIndex = this.sound.track_count-1;
+                else this.streamPlaylistIndex--;
+            }
+            if(this.streamPlaylistIndex>=0 && this.streamPlaylistIndex<=this.sound.track_count-1) {
+               this.player.setAttribute('src',this.streamUrl());
+               this.uiUpdater.update(this);
+               this.player.play();
+            }
+        }
+    }
+
+
+};
+
+/**
+ * Class to update the UI when a new sound is loaded
+ * @constructor
+ */
+var UiUpdater = function() {
+    var controlPanel = document.getElementById('controlPanel');
+    var trackInfoPanel = document.getElementById('trackInfoPanel');
+    var infoImage = document.getElementById('infoImage');
+    var infoArtist = document.getElementById('infoArtist');
+    var infoTrack = document.getElementById('infoTrack');
+    var messageBox = document.getElementById('messageBox');
+
+    this.clearInfoPanel = function() {
+        // first clear the current contents
+        infoArtist.innerHTML = "";
+        infoTrack.innerHTML = "";
+        trackInfoPanel.className = 'hidden';
+    };
+    this.update = function(loader) {
+        // update the track and artist into in the controlPanel
+        var artistLink = document.createElement('a');
+        artistLink.setAttribute('href', loader.sound.user.permalink_url);
+        artistLink.innerHTML = loader.sound.user.username;
+        var trackLink = document.createElement('a');
+        trackLink.setAttribute('href', loader.sound.permalink_url);
+
+        if(loader.sound.kind=="playlist"){
+            trackLink.innerHTML = "<p>" + loader.sound.tracks[loader.streamPlaylistIndex].title + "</p>" + "<p>"+loader.sound.title+"</p>";
+        }else{
+            trackLink.innerHTML = loader.sound.title;
+        }
+
+        var image = loader.sound.artwork_url ? loader.sound.artwork_url : loader.sound.user.avatar_url; // if no track artwork exists, use the user's avatar.
+        infoImage.setAttribute('src', image);
+
+        infoArtist.innerHTML = '';
+        infoArtist.appendChild(artistLink);
+
+        infoTrack.innerHTML = '';
+        infoTrack.appendChild(trackLink);
+
+        // display the track info panel
+        trackInfoPanel.className = '';
+
+        // add a hash to the URL so it can be shared or saved
+        var trackToken = loader.sound.permalink_url.substr(22);
+        window.location = '#' + trackToken;
+    };
+    this.toggleControlPanel = function() {
+        if (controlPanel.className.indexOf('hidden') === 0) {
+            controlPanel.className = '';
+        } else {
+            controlPanel.className = 'hidden';
+        }
+    };
+    this.displayMessage = function(title, message) {
+        messageBox.innerHTML = ''; // reset the contents
+
+        var titleElement = document.createElement('h3');
+        titleElement.innerHTML = title;
+
+        var messageElement = document.createElement('p');
+        messageElement.innerHTML = message;
+
+        var closeButton = document.createElement('a');
+        closeButton.setAttribute('href', '#');
+        closeButton.innerHTML = 'close';
+        closeButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            messageBox.className = 'hidden';
+        });
+
+        messageBox.className = '';
+        // stick them into the container div
+        messageBox.appendChild(titleElement);
+        messageBox.appendChild(messageElement);
+        messageBox.appendChild(closeButton);
+    };
+};
+
+  // var visualizer = new Visualizer();
+    var player =  document.getElementById('player');
+    var uiUpdater = new UiUpdater();
+    var loader = new SoundcloudLoader(player,uiUpdater);
+
+    var audioSource = new SoundCloudAudioSource(player);
+    var form = document.getElementById('form');
+    var loadAndUpdate = function(trackUrl) {
+        loader.loadStream(trackUrl,
+            function() {
+                uiUpdater.clearInfoPanel();
+                audioSource.playStream(loader.streamUrl());
+                uiUpdater.update(loader);
+                // setTimeout(uiUpdater.toggleControlPanel, 3000); // auto-hide the control panel
+            },
+            function() {
+                uiUpdater.displayMessage("Error", loader.errorMessage);
+            });
+    };
+
+    // visualizer.init({
+    //     containerId: 'visualizer',
+    //     audioSource: audioSource
+    // });
+
+
+    uiUpdater.toggleControlPanel();
+    // on load, check to see if there is a track token in the URL, and if so, load that automatically
+    if (window.location.hash) {
+        var trackUrl = 'https://soundcloud.com/' + window.location.hash.substr(1);
+        loadAndUpdate(trackUrl);
+    }
+
+    // handle the form submit event to load the new URL
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        var trackUrl = document.getElementById('input').value;
+        loadAndUpdate(trackUrl);
+    });
+    var toggleButton = document.getElementById('toggleButton')
+    toggleButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        uiUpdater.toggleControlPanel();
+    });
+    // var aboutButton = document.getElementById('credit');
+    // aboutButton.addEventListener('click', function(e) {
+    //     e.preventDefault();
+    //     var message = document.getElementById('info').innerHTML;
+    //     uiUpdater.displayMessage("About", message);
+    // });
+
+    window.addEventListener("keydown", keyControls, false);
+     
+    function keyControls(e) {
+        switch(e.keyCode) {
+            case 32:
+                // spacebar pressed
+                loader.directStream('toggle');
+                break;
+            case 37:
+                // left key pressed
+                loader.directStream('backward');
+                break;
+            case 39:
+                // right key pressed
+                loader.directStream('forward');
+                break;
+        }   
+    }
+
+
+    // addEventListener()
+    // init renderer
+
+    //////////////////////////////////////////////////////////////////////////////////
+
+            // var ctx = new AudioContext();
+            // var audio = document.getElementById('myAudio');
+            
+            // var audioSrc = ctx.createMediaElementSource(audio);
+            // var analyser = ctx.createAnalyser();
+            // // // we have to connect the MediaElementSource with the analyser 
+
+            
+            // // // we could configure the analyser: e.g. analyser.fftSize (for further infos read the spec)
+            // // // frequencyBinCount tells you how many values you'll receive from the analyser
+            
+            // var frequencyData = new Uint8Array(particleCount);
+            // console.log(analyser.frequencyBinCount, frequencyData);
+            // audioSrc.connect(analyser);
+            // audioSrc.connect(ctx.destination)
+            // audio.load();
+            // audio.play();
+
+            // we're ready to receive some data!
+            // loop
+            // audio.start();
+    //////////////////////////////////////////////////////////////////////////////////
+    var renderer    = new THREE.WebGLRenderer({
+        antialias   : true
+    });
+    renderer.setClearColor(new THREE.Color('lightgrey'), 1)
+    renderer.setSize( window.innerWidth, window.innerHeight );
+    document.body.appendChild( renderer.domElement );
+
+    // array of functions for the rendering loop
+    var onRenderFcts= [];
+    var width=window.innerWidth,
+        height =window.innerHeight;
+    // init scene and camera
+    var scene   = new THREE.Scene();
+    var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
+    camera.position.set( -200, 50, -200 );
+    // var camera   = new THREE.OrthographicCamera( -1 , 1 , -1 , 1 , 1, 1000 );
+    // camera.position.z = ;
+    var controls    = new THREE.OrbitControls(camera)
+        controls.autoRotate =true;
+
+    /**************************************************************************************
+    *
+    *PARTICULES
+    *
+    **************************************************************************************/
+    // set particule cloud object.
+    var particles = new THREE.Geometry(),
+    pMaterial = new THREE.PointCloudMaterial({
+        transparent: true,
+        opacity: 1,
+        map: THREE.ImageUtils.loadTexture(
+            "./cell.png"
+        ),
+        vertexColors: THREE.VertexColors,
+        sortParticules:true,
+        size:10
+    });
+   
+
+    var positionLastCell 
+    // set particule Number inside particule cloud
+    for (var p = 0; p < particleCount; p++) {
+
+      // create a particle with random
+      //VORTEX
+      var pX = Math.sin(p)*p*1,
+          pY = Math.cos(p)*-p*1,
+          pZ = 0;
+          // //triangle 
+          // var pX = p,
+          // pY = Math.cos(p)*-p*1,
+          // pZ = 0;
+          //triangle bottom !
+          var pX = Math.cos(p)*-p*1,
+          pY = p,
+          pZ = 0;
+            //line with noise
+          // var pX = p+p/2,
+          // pY = Math.sin(p*15),
+          // pZ = 0;
+          
+
+          var particle = new THREE.Vector3(pX, pY, pZ);
+
+           if(p == particleCount-1){
+                positionLastCell = particle;
+            }
+        // add it to the geometry
+        particles.vertices.push(particle);
+    }
+    // set particules colors
+    var colors = [];
+    for( var i = 0; i < particles.vertices.length; i++ ) {
+        colors[i] = new THREE.Color();
+        // colors[i].setRGB( 0,  0,  0 );
+    }   
+    particles.colors = colors;  
+    // create the particle system
+    var particleSystem = new THREE.PointCloud(
+        particles,
+        pMaterial);
+    // console.log(particleSystem.geometry.vertices);
+    onRenderFcts.push(function(){
+        // console.log(i,particleSystem.geometry.vertices[i])
+        // debugger;
+        particleSystem.geometry.verticesNeedUpdate =true;
+        particleSystem.geometry.colorsNeedUpdate =true;
+
+        for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
+        {
+            // if(i==1){
+            // console.log(particleSystem.geometry.colors[i].r,frequencyData[i]/250);
+            // debugger;
+            // }
+            // particleSystem.geometry.vertices[i].x=frequencyData[i];
+            // particleSystem.geometry.vertices[i].y=frequencyData[i]/2;
+            particleSystem.geometry.vertices[i].z=audioSource.streamData[i]*-1/2;
+            if(audioSource.streamData[i]<100){
+                // console.log(audioSource.streamData[i],particleSystem.geometry.colors[i], audioSource.streamData[i]/250+0.5,"ici paris paris paris");   
+                // debugger;
+                // particleSystem.geometry.colors[i].setRGB(audioSource.streamData[i]/250,0,0);
+                particleSystem.geometry.colors[i].setRGB(0,audioSource.streamData[i]/250,0);
+                particleSystem.geometry.colors[i].b= audioSource.streamData[i]/250;
+            }
+            if(audioSource.streamData[i]<180&&audioSource.streamData[i]>=100){
+                // console.log(audioSource.streamData[i],particleSystem.geometry.colors[i], audioSource.streamData[i]/250+0.5,"ici paris paris paris");   
+                particleSystem.geometry.colors[i].g= audioSource.streamData[i]/250;
+
+            }
+            if(audioSource.streamData[i]>=180)
+                particleSystem.geometry.colors[i].r= 0.2+audioSource.streamData[i]/250;
+                // particleSystem.geometry.colors[i].setRGB(0,0,frequencyData[i]/250);
+
+
+            // console.log(particleSystem.geometry.vertices[i]);
+        }
+
+    })
+console.log(-positionLastCell.x/2)
+particleSystem.position = new THREE.Vector3(-positionLastCell.x , -positionLastCell.y/2, -positionLastCell.z/2 );
+    scene.add(particleSystem)
+
+    //////////////////////////////////////////////////////////////////////////////////
+    //      add an object in the scene
+    //////////////////////////////////////////////////////////////////////////////////
+
+    // // add a torus   
+    // var geometry = new THREE.TorusKnotGeometry(0.5-0.12, 0.12);
+    // var material = new THREE.MeshNormalMaterial(); 
+    // var mesh = new THREE.Mesh( geometry, material );
+    // scene.add( mesh );
+
+
+    // onRenderFcts.push(function(delta,now){
+    //  mesh.rotation.y += 1*delta;
+    // })
+// IMAGE ON SPHERE
+    // var geometry = new THREE.TorusGeometry( 0.5, 0.2, 16, 100 );
+    // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
+    // var torus = new THREE.Mesh( geometry, material ); 
+    
+    // // scene.add( torus );
+      // add subtle ambient lighting
+      // var ambientLight = new THREE.AmbientLight(0x00044);
+      // scene.add(ambientLight);
+    // scene.add( light );
+
+    // onRenderFcts.push(function(delta,now){
+    //  mesh.rotation.y += 1*delta;
+    // })
+    //////////////////////////////////////////////////////////////////////////////////
+    //      render the whole thing on the page
+    //////////////////////////////////////////////////////////////////////////////////
+
+    // handle window resize
+    window.addEventListener('resize', function(){
+        renderer.setSize( window.innerWidth, window.innerHeight )
+        camera.aspect   = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()     
+    }, false)
+
+    // render the scene
+    onRenderFcts.push(function(){
+        renderer.render( scene, camera );       
+    })
+    
+    // run the rendering loop
+    var lastTimeMsec= null
+    requestAnimationFrame(function animate(nowMsec){
+        // keep looping
+        requestAnimationFrame( animate );
+        // measure time
+        lastTimeMsec    = lastTimeMsec || nowMsec-1000/60
+        var deltaMsec   = Math.min(200, nowMsec - lastTimeMsec)
+        lastTimeMsec    = nowMsec
+        // call each update function
+        // analyser.getByteFrequencyData(frequencyData)
+        audioSource.sampleAudioStream();
+        onRenderFcts.forEach(function(onRenderFct){
+            onRenderFct(deltaMsec/1000, nowMsec/1000)
+        })
+    })
+</script></body>

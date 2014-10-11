@@ -1,0 +1,15 @@
+{
+  "name": "threejs-build",
+  "main": "build/three.min.js",
+  "homepage": "https://github.com/bodylabs/threejs-build",
+  "_release": "b1e2514db6",
+  "_resolution": {
+    "type": "branch",
+    "branch": "master",
+    "commit": "b1e2514db64fbbaf1bbd2581005e6c7c6db23cc3"
+  },
+  "_source": "git://github.com/bodylabs/threejs-build.git",
+  "_target": "*",
+  "_originalSource": "threejs-build",
+  "_direct": true
+}
