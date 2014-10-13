@@ -1,42 +1,217 @@
 <!DOCTYPE html>
-<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-<script src='vendor/three.js/build/three.min.js'></script>
-<script src='vendor/three.js/examples/js/controls/OrbitControls.js'></script>
+<head>
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src='vendor/three.js/build/three.min.js'></script>
+    <script src='vendor/three.js/examples/js/controls/OrbitControls.js'></script>
+</head>
 <body style='margin: 0px; overflow: hidden; text-align:center;'>
 
-<audio id="myAudio" src="Numb.ogg"></audio>
+    <audio id="myAudio" src="Numb.ogg"></audio>
 
-<div style='position: absolute; top: 0px; width: 100%;font-family:arial; font-weight: bolder; padding-top: 5px;'>
-    <a href="https://github.com/jeromeetienne/threejsboilerplate" target="_blank">Boilerplate</a>
-    for
-    <a href="http://threejs.org" target="_blank">three.js</a>
-    - works on desktop and mobile
-
-</div>
-    <div id="controlPanel" class="hidden">
-    <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
-    <div id="trackInfoPanel" class="hidden">
-        <img id="infoImage" src="">
-        <div id="infoArtist"></div>
-        <div id="infoTrack"></div>
+    <div style='position: absolute; top: 0px; width: 100%;font-family:arial; font-weight: bolder; padding-top: 5px;'>
     </div>
-    <div id="playerControls">
-        <form id="form">
-            <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
-            <button type="submit" id="submit"><i class="icon-play"></i></button><br>
-        </form>
-        <audio id="player" controls="" autoplay="true" preload="auto" autobuffer="true"></audio>
-    </div>
-</div>
+        <div id="controlPanel" class="hidden">
+        <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
+        <div id="trackInfoPanel" class="hidden">
+            <img id="infoImage" src="">
+            <div id="infoArtist"></div>
+            <div id="infoTrack"></div>
+        </div>
+        <div id="playerControls">
+            <form id="form">
+                <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
+                <button type="submit" id="submit"><i class="icon-play"></i></button><br>
+            </form>
+            <audio id="player" controls="" autoplay="true" preload="auto" autobuffer="true"></audio>
+        </div>
+        <label>Active Transition AUTO:
+            <input id="transitionAuto" type='checkbox' >
+        </label>
+        <label>Selectionne ta geometrie :
+            <select id="selectParticulePos" >
+                <option>leaf</option>
+                <option>rosasse</option>
+                <option>inline</option>
+                <option>flower</option>
+                <option>vortex</option>
+                <option>vortex2</option>
+                <option>triangle</option>
 
-<div id="messageBox" class="hidden">
-<script src="//connect.soundcloud.com/sdk.js"></script>
+            </select>
+        </label>
+    </div>
+    <div id="messageBox" class="hidden">
+    <script src="//connect.soundcloud.com/sdk.js"></script>
 <script>
     //////////////////////////////////////////////////////////////////////////////////
     //      Init
     //////////////////////////////////////////////////////////////////////////////////
+   /* Function reboot(value){
+
+    }*/
     var particleCount = 300;
-    
+
+    var Player = function Player(params){
+        var self = this;
+        this.particulePosition;
+        this.deltaTime=0;
+        this.speedCoef = 1;
+        this.intervalContener;
+        this.transitionAuto = document.getElementById("transitionAuto");
+        var choiceParticulePosition = document.getElementById("selectParticulePos");
+        var pX,pY,pZ;
+
+        var intervalValue = 400;
+        var optionsList=[];
+        var autoIntervalAnimation;
+        this.init = function(params){
+            this.particulePosition = (params.particulesPos!==undefined)?params.particulesPos:choiceParticulePosition.value;
+
+            choiceParticulePosition.setAttribute("onChange","player.CbUpdateSelect(this.value)");
+            this.transitionAuto.setAttribute("onChange","player.CbUpdateCheckbox(this.checked)");
+            var domOptionList = choiceParticulePosition.options;
+            for (var i=0;i<domOptionList.length;i++){
+                optionsList.push(domOptionList[i].text);
+            } 
+            if(this.transitionAuto.checked){
+                this.CbUpdateSelect();
+            }
+        }               
+        this.CbUpdateCheckbox = function(value){
+            // this.transitionAuto = value;
+            if(value){
+                var nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                console.log(choiceParticulePosition.value)
+                while(nextAnim===choiceParticulePosition.value){
+                    nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                }
+                
+                autoIntervalAnimation = setInterval((function(){
+                    var nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                    console.log(choiceParticulePosition.value)
+                    while(nextAnim===choiceParticulePosition.value){
+                        nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                    }
+
+                    this.CbUpdateSelect(nextAnim)}).bind(this),4000);
+            }
+            else{
+                clearInterval(autoIntervalAnimation);
+            }
+        }
+
+        this.CbUpdateSelect = function(value){
+            console.log(value)
+            this.particulePosition = value;
+            this.deltaTime=0;
+            this.intervalContener = setInterval(makeLerp.bind(this,this.randomAvarage()),40);
+        }
+        this.randomAvarage = function(){
+
+            var one=0;
+            var zero=0;
+            for (var x = 0; x<1000;x++){
+            var random = Math.round(Math.random()*1);
+                if(random===0){
+                    zero+=1;
+                }
+                else if (random===1) {
+                    one+=1;
+                }
+                else{
+                    console.log(random,"OUT OF RANGE");
+                }
+            }
+            zero = (zero*100)/1000;
+            one = (one*100)/1000;
+            return {avarage1:zero,avarage2:one}
+        }
+
+        this.vortex = function(p){
+            pX = Math.sin(p)*p*1;
+            pY = Math.cos(p)*-p*1;
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+        
+        this.vortex2 = function(p){
+            pX = Math.cos(p*2)*-p;
+            pY = p*Math.sin(2*p);
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+        var randomBorn = function(born){
+            return Math.round(Math.random()*born)
+        }
+        this.triangle = function(p){
+            pX = p;
+            pY = Math.cos(p)*-p*1;
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+
+        this.flower = function(p){
+            pX = Math.cos(p*2)*-p;
+            pY = p;
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+
+        this.inline = function(p){
+            pX = p+10;
+            pY = 0;
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+
+        this.rosasse = function(p){
+            pX =  (Math.cos(p*5)*100) * Math.cos(p*2);
+            pY = Math.sin(p*5)*100;
+            pZ =  (Math.cos(p*5)*100) * Math.sin(p*2);
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+        
+        this.leaf = function(p){
+            pX = 30 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.cos(p);
+            pY = 30 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.sin(p);
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+        var makeLerp = function makeLerp(randomChoice){
+            // debugger
+            // console.log(this.deltaTime)
+            var choice = randomChoice;
+            if(this.deltaTime <1){
+                if(choice.avarage1>choice.avarage2){                
+                    for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
+                    {
+                        // console.log(this[this.particulePosition](i),this.deltaTime);
+                        particleSystem.geometry.vertices[i].lerp(this[this.particulePosition](i),this.deltaTime);
+                    }
+                }
+                else {
+                    for (var i=particleSystem.geometry.vertices.length-1 ; i>0;i--)
+                    {
+                        // console.log(this[this.particulePosition](i),this.deltaTime);
+                        particleSystem.geometry.vertices[i].lerp(this[this.particulePosition](i),this.deltaTime);
+                    }
+
+                }
+            }          
+            else {
+                clearInterval(this.intervalContener);
+            }
+        }
+
+        function Vector3Wrapper(x,y,z){
+
+            return new THREE.Vector3(x,y,z);
+        }
+        
+        this.init(params);
+    }
+
+
     /*********************************************************************************
     *SOUNDCLOUD CLASS
     *********************************************************************************/
@@ -49,7 +224,6 @@ var SoundCloudAudioSource = function(player) {
     var analyser;
     var audioCtx = new (window.AudioContext || window.webkitAudioContext);
     analyser = audioCtx.createAnalyser();
-    analyser.fftSize = 256;
     var source = audioCtx.createMediaElementSource(player);
     source.connect(analyser);
     analyser.connect(audioCtx.destination);
@@ -57,7 +231,7 @@ var SoundCloudAudioSource = function(player) {
         analyser.getByteFrequencyData(self.streamData);
         // calculate an overall volume value
         var total = 0;
-        for (var i = 0; i < 80; i++) { // get the volume from the first 80 bins, else it gets too loud with treble
+        for (var i = 0; i < particleCount; i++) { // get the volume from the first 80 bins, else it gets too loud with treble
             total += self.streamData[i];
         }
         self.volume = total;
@@ -276,12 +450,6 @@ var UiUpdater = function() {
         e.preventDefault();
         uiUpdater.toggleControlPanel();
     });
-    // var aboutButton = document.getElementById('credit');
-    // aboutButton.addEventListener('click', function(e) {
-    //     e.preventDefault();
-    //     var message = document.getElementById('info').innerHTML;
-    //     uiUpdater.displayMessage("About", message);
-    // });
 
     window.addEventListener("keydown", keyControls, false);
      
@@ -305,36 +473,14 @@ var UiUpdater = function() {
 
     // addEventListener()
     // init renderer
-
-    //////////////////////////////////////////////////////////////////////////////////
-
-            // var ctx = new AudioContext();
-            // var audio = document.getElementById('myAudio');
-            
-            // var audioSrc = ctx.createMediaElementSource(audio);
-            // var analyser = ctx.createAnalyser();
-            // // // we have to connect the MediaElementSource with the analyser 
-
-            
-            // // // we could configure the analyser: e.g. analyser.fftSize (for further infos read the spec)
-            // // // frequencyBinCount tells you how many values you'll receive from the analyser
-            
-            // var frequencyData = new Uint8Array(particleCount);
-            // console.log(analyser.frequencyBinCount, frequencyData);
-            // audioSrc.connect(analyser);
-            // audioSrc.connect(ctx.destination)
-            // audio.load();
-            // audio.play();
-
-            // we're ready to receive some data!
-            // loop
-            // audio.start();
-    //////////////////////////////////////////////////////////////////////////////////
     var renderer    = new THREE.WebGLRenderer({
         antialias   : true
     });
-    renderer.setClearColor(new THREE.Color('lightgrey'), 1)
+    renderer.setClearColor(new THREE.Color('black'), 0.5)
+    
     renderer.setSize( window.innerWidth, window.innerHeight );
+    
+    renderer.domElement.id = "canvas";
     document.body.appendChild( renderer.domElement );
 
     // array of functions for the rendering loop
@@ -343,13 +489,17 @@ var UiUpdater = function() {
         height =window.innerHeight;
     // init scene and camera
     var scene   = new THREE.Scene();
-    var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 1000);
-    camera.position.set( -200, 50, -200 );
-    // var camera   = new THREE.OrthographicCamera( -1 , 1 , -1 , 1 , 1, 1000 );
-    // camera.position.z = ;
+    
+
+    var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 2000);
+    
+    camera.position.set(100.13291037011113,-40.52396785105856,-1020.363519560985);
+    camera.rotation.set(-3.0415535640235274, 0.02263886127914203, 3.139320494992936);
     var controls    = new THREE.OrbitControls(camera)
         controls.autoRotate =true;
 
+
+    var player = new Player({});
     /**************************************************************************************
     *
     *PARTICULES
@@ -364,92 +514,99 @@ var UiUpdater = function() {
             "./cell.png"
         ),
         vertexColors: THREE.VertexColors,
-        sortParticules:true,
+        sortParticles:true,
         size:10
     });
-   
 
     var positionLastCell 
     // set particule Number inside particule cloud
-    for (var p = 0; p < particleCount; p++) {
+    var one=0;
+    var zero=0;
+    for (var x = 0; x<1000;x++){
+    var random = Math.round(Math.random()*1)
+        if(random===0){
+            zero+=1;
+        }
+        else if (random===1) {
+            one+=1;
+        }
+        else{
+            console.log(random,"OUT OF RANGE");
+        }
+    }
+    
+    if((zero*100)/1000>(one*100)/1000){
 
-      // create a particle with random
-      //VORTEX
-      var pX = Math.sin(p)*p*1,
-          pY = Math.cos(p)*-p*1,
-          pZ = 0;
-          // //triangle 
-          // var pX = p,
-          // pY = Math.cos(p)*-p*1,
-          // pZ = 0;
-          //triangle bottom !
-          var pX = Math.cos(p)*-p*1,
-          pY = p,
-          pZ = 0;
-            //line with noise
-          // var pX = p+p/2,
-          // pY = Math.sin(p*15),
-          // pZ = 0;
-          
-
-          var particle = new THREE.Vector3(pX, pY, pZ);
-
-           if(p == particleCount-1){
-                positionLastCell = particle;
-            }
-        // add it to the geometry
-        particles.vertices.push(particle);
+        for (var p = particleCount; p >0; p--) {
+            var particle = player[player.particulePosition](p);
+            particle.originPos = player[player.particulePosition](p);
+            // add it to the geometry
+            particles.vertices.push(particle);
+        }
+    }
+    else{
+        for (var p = 0; p <particleCount; p++) {        
+            var particle = player[player.particulePosition](p);
+            particle.originPos = player[player.particulePosition](p);
+            // add it to the geometry
+            particles.vertices.push(particle);
+        }
     }
     // set particules colors
     var colors = [];
     for( var i = 0; i < particles.vertices.length; i++ ) {
         colors[i] = new THREE.Color();
-        // colors[i].setRGB( 0,  0,  0 );
-    }   
+    }
     particles.colors = colors;  
     // create the particle system
     var particleSystem = new THREE.PointCloud(
         particles,
         pMaterial);
-    // console.log(particleSystem.geometry.vertices);
+
     onRenderFcts.push(function(){
-        // console.log(i,particleSystem.geometry.vertices[i])
-        // debugger;
+        
         particleSystem.geometry.verticesNeedUpdate =true;
         particleSystem.geometry.colorsNeedUpdate =true;
 
         for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
         {
-            // if(i==1){
-            // console.log(particleSystem.geometry.colors[i].r,frequencyData[i]/250);
-            // debugger;
-            // }
-            // particleSystem.geometry.vertices[i].x=frequencyData[i];
-            // particleSystem.geometry.vertices[i].y=frequencyData[i]/2;
-            particleSystem.geometry.vertices[i].z=audioSource.streamData[i]*-1/2;
-            if(audioSource.streamData[i]<100){
-                // console.log(audioSource.streamData[i],particleSystem.geometry.colors[i], audioSource.streamData[i]/250+0.5,"ici paris paris paris");   
-                // debugger;
-                // particleSystem.geometry.colors[i].setRGB(audioSource.streamData[i]/250,0,0);
-                particleSystem.geometry.colors[i].setRGB(0,audioSource.streamData[i]/250,0);
-                particleSystem.geometry.colors[i].b= audioSource.streamData[i]/250;
+            if(player.particulePosition === 'inline'){
+                particleSystem.geometry.vertices[i].y=audioSource.streamData[i]/2;
             }
-            if(audioSource.streamData[i]<180&&audioSource.streamData[i]>=100){
-                // console.log(audioSource.streamData[i],particleSystem.geometry.colors[i], audioSource.streamData[i]/250+0.5,"ici paris paris paris");   
-                particleSystem.geometry.colors[i].g= audioSource.streamData[i]/250;
-
+            else{   
+                if(player.particulePosition === "rosasse"){
+                    
+                    particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1)/2);
+                }
+                else{    
+                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1)/2;
+                }
             }
-            if(audioSource.streamData[i]>=180)
-                particleSystem.geometry.colors[i].r= 0.2+audioSource.streamData[i]/250;
-                // particleSystem.geometry.colors[i].setRGB(0,0,frequencyData[i]/250);
+            particleSystem.geometry.colors[i].setRGB(0,0,0);
 
+           if(audioSource.streamData[i]<100){
+                particleSystem.geometry.colors[i].r = 28/250;
+                particleSystem.geometry.colors[i].g = (audioSource.streamData[i]+90)/250;
+                particleSystem.geometry.colors[i].b = (audioSource.streamData[i]+90)/250;
+            }
+            else if(audioSource.streamData[i]<160&&audioSource.streamData[i]>=100){
+                particleSystem.geometry.colors[i].r= 28/255;
+                particleSystem.geometry.colors[i].g= (audioSource.streamData[i]+50)/255;
+                particleSystem.geometry.colors[i].b= 28/255;
+            }
+            else if(audioSource.streamData[i]>=160&& audioSource.streamData[i]<=200){
+                particleSystem.geometry.colors[i].r= 255/255;
+                particleSystem.geometry.colors[i].g= audioSource.streamData[i]/255;
+                particleSystem.geometry.colors[i].b= 28/255;                
 
-            // console.log(particleSystem.geometry.vertices[i]);
+            }   
+            else if(audioSource.streamData[i]>200){
+                particleSystem.geometry.colors[i].r= (audioSource.streamData[i]+50)/255;
+                particleSystem.geometry.colors[i].g= 28/255;
+                particleSystem.geometry.colors[i].b= 28/255;
+            }
         }
-
-    })
-console.log(-positionLastCell.x/2)
-particleSystem.position = new THREE.Vector3(-positionLastCell.x , -positionLastCell.y/2, -positionLastCell.z/2 );
+    });
     scene.add(particleSystem)
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -505,11 +662,11 @@ particleSystem.position = new THREE.Vector3(-positionLastCell.x , -positionLastC
         lastTimeMsec    = lastTimeMsec || nowMsec-1000/60
         var deltaMsec   = Math.min(200, nowMsec - lastTimeMsec)
         lastTimeMsec    = nowMsec
-        // call each update function
-        // analyser.getByteFrequencyData(frequencyData)
+        player.deltaTime+=deltaMsec/(2500*player.speedCoef);
+        // console.log(player.deltaTime);
         audioSource.sampleAudioStream();
         onRenderFcts.forEach(function(onRenderFct){
             onRenderFct(deltaMsec/1000, nowMsec/1000)
         })
-    })
+    });
 </script></body>
