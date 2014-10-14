@@ -27,7 +27,10 @@
         <audio id="player" controls="" autoplay="" preload autobuffer></audio>
     </div>
     <label>Active Transition AUTO:
-        <input id="transitionAuto"  type='checkbox' >
+        <input id="transitionAuto" checked  type='checkbox' >
+    </label>
+    <label>Active rotation AUTO:
+        <input id="rotationAuto"  checked type='checkbox' >
     </label>
     <label>Selectionne ta geometrie :
         <select id="selectParticulePos" >
@@ -52,13 +55,15 @@
 
     }*/
     var particleCount = 1000;
-
+    var particleSize = 30;
     var Player = function Player(params){
         var self = this;
         this.particulePosition;
         this.deltaTime=0;
         this.speedCoef = 1;
         this.intervalContener;
+        this.rotationValue;
+        var rotation =document.getElementById("rotationAuto");
         this.transitionAuto = document.getElementById("transitionAuto");
         var choiceParticulePosition = document.getElementById("selectParticulePos");
         var pX,pY,pZ;
@@ -72,39 +77,48 @@
             this.particulePosition = (params.particulesPos!==undefined)?params.particulesPos:choiceParticulePosition.value;
 
             choiceParticulePosition.setAttribute("onChange","player.CbUpdateSelect(this.value)");
-            this.transitionAuto.setAttribute("onChange","player.CbUpdateCheckbox(this.checked)");
+            this.transitionAuto.setAttribute("onChange","player.CbUpdateCheckbox(this.checked,this.id)");
+            rotation.setAttribute("onChange","player.CbUpdateCheckbox(this.checked,this.id)");
+            this.rotationValue = rotation.checked;
+            
             var domOptionList = choiceParticulePosition.options;
             for (var i=0;i<domOptionList.length;i++){
                 optionsList.push(domOptionList[i].text);
             } 
             if(this.transitionAuto.checked){
-                this.CbUpdateSelect();
+                this.CbUpdateSelect(choiceParticulePosition.value);
             }
-        }               
-        this.CbUpdateCheckbox = function(value){
-            // this.transitionAuto = value;
-            if(value){
-                var nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                console.log(choiceParticulePosition.value)
-                while(nextAnim===choiceParticulePosition.value){
-                    nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                }
-                
-                autoIntervalAnimation = setInterval((function(){
+        }     
+
+
+        this.CbUpdateCheckbox = function(value,id){
+            console.log(value,id);
+            if(id!=="rotationAuto"){
+                if(value){
                     var nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                    console.log(choiceParticulePosition.value)
                     while(nextAnim===choiceParticulePosition.value){
                         nextAnim = optionsList[randomBorn(optionsList.length-1)];
                     }
+                    
+                    autoIntervalAnimation = setInterval((function(){
+                        var nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                        while(nextAnim===choiceParticulePosition.value){
+                            nextAnim = optionsList[randomBorn(optionsList.length-1)];
+                        }
 
-                    this.CbUpdateSelect(nextAnim)}).bind(this),6000);
+                        this.CbUpdateSelect(nextAnim)}).bind(this),6000);
+                }
+                else{
+                    clearInterval(autoIntervalAnimation);
+                }
             }
             else{
-                clearInterval(autoIntervalAnimation);
+                this.rotationValue = value;
             }
         }
 
         this.CbUpdateSelect = function(value){
-            console.log(value)
             this.particulePosition = value;
             this.deltaTime=0;
             this.intervalContener = setInterval(makeLerp.bind(this,this.randomAvarage()),40);
@@ -529,7 +543,7 @@ var UiUpdater = function() {
         ),
         vertexColors: THREE.VertexColors,
         sortParticles:true,
-        size:10
+        size: particleSize
     });
 
     var positionLastCell 
@@ -559,7 +573,7 @@ var UiUpdater = function() {
         }
     }
     else{
-        for (var p = 0; p <particleCount; p++) {        
+        for (var p = 0; p < particleCount; p++) {        
             var particle = player[player.particulePosition](p);
             particle.originPos = player[player.particulePosition](p);
             // add it to the geometry
@@ -577,12 +591,14 @@ var UiUpdater = function() {
         particles,
         pMaterial);
     onRenderFcts.push(function(){
-        particleSystem.rotation.y += (audioSource.streamData[30]*-1)/6000;
-        particleSystem.rotation.z += (audioSource.streamData[75]*-1)/10000;
+        if(player.rotationValue){        
+            particleSystem.rotation.y += (audioSource.streamData[30]*-1)/6000;
+            particleSystem.rotation.z += (audioSource.streamData[75]*-1)/10000;
+        }
     });
     onRenderFcts.push(function(){
-        particleSystem.geometry.verticesNeedUpdate =true;
-        particleSystem.geometry.colorsNeedUpdate =true;
+        particleSystem.geometry.verticesNeedUpdate = true;
+        particleSystem.geometry.colorsNeedUpdate = true;
 
         for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
         {
@@ -595,7 +611,7 @@ var UiUpdater = function() {
                     particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1)/2);
                 }
                 else{    
-                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1);
+                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1)*2;
                 }
             }
             particleSystem.geometry.colors[i].setRGB(0,0,0);
