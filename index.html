@@ -2,6 +2,8 @@
 <head>
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src='vendor/three.js/build/three.min.js'></script>
+    <link rel="stylesheet" href="css/normalize.css">
+    <link rel="stylesheet" href="css/style.css">
     <script src='vendor/three.js/examples/js/controls/OrbitControls.js'></script>
 </head>
 <body style='margin: 0px; overflow: hidden; text-align:center;'>
@@ -10,38 +12,38 @@
 
     <div style='position: absolute; top: 0px; width: 100%;font-family:arial; font-weight: bolder; padding-top: 5px;'>
     </div>
-        <div id="controlPanel" class="hidden">
-        <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
-        <div id="trackInfoPanel" class="hidden">
-            <img id="infoImage" src="">
-            <div id="infoArtist"></div>
-            <div id="infoTrack"></div>
-        </div>
-        <div id="playerControls">
-            <form id="form">
-                <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
-                <button type="submit" id="submit"><i class="icon-play"></i></button><br>
-            </form>
-            <audio id="player" controls="" autoplay="true" preload="auto" autobuffer="true"></audio>
-        </div>
-        <label>Active Transition AUTO:
-            <input id="transitionAuto" type='checkbox' >
-        </label>
-        <label>Selectionne ta geometrie :
-            <select id="selectParticulePos" >
-                <option>leaf</option>
-                <option>rosasse</option>
-                <option>inline</option>
-                <option>flower</option>
-                <option>vortex</option>
-                <option>vortex2</option>
-                <option>triangle</option>
-
-            </select>
-        </label>
+<div id="controlPanel" class="hidden">
+    <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
+    <div id="trackInfoPanel" class="hidden">
+        <img id="infoImage" src="">
+        <div id="infoArtist"></div>
+        <div id="infoTrack"></div>
     </div>
-    <div id="messageBox" class="hidden">
-    <script src="//connect.soundcloud.com/sdk.js"></script>
+    <div id="playerControls">
+        <form id="form">
+            <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
+            <button type="submit" id="submit"><i class="icon-play"></i></button><br>
+        </form>
+        <audio id="player" controls="" autoplay="" preload autobuffer></audio>
+    </div>
+    <label>Active Transition AUTO:
+        <input id="transitionAuto"  type='checkbox' >
+    </label>
+    <label>Selectionne ta geometrie :
+        <select id="selectParticulePos" >
+            <option>inline</option>
+            <option>rosasse</option>
+            <option>leaf</option>
+            <option>flower</option>
+            <option>triforce</option>
+            <option>vortex</option>
+            <option>vortex2</option>
+            <option>triangle</option>
+        </select>
+    </label>
+</div>
+<div id="messageBox" class="hidden">
+<script src="//connect.soundcloud.com/sdk.js"></script>
 <script>
     //////////////////////////////////////////////////////////////////////////////////
     //      Init
@@ -64,6 +66,8 @@
         var intervalValue = 400;
         var optionsList=[];
         var autoIntervalAnimation;
+        var currentPoint = {x: 0, y:0};
+        var masterPoints = [{x: -50, y: -250}, {x:-250, y:50}, {x:150, y:50}];
         this.init = function(params){
             this.particulePosition = (params.particulesPos!==undefined)?params.particulesPos:choiceParticulePosition.value;
 
@@ -88,12 +92,11 @@
                 
                 autoIntervalAnimation = setInterval((function(){
                     var nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                    console.log(choiceParticulePosition.value)
                     while(nextAnim===choiceParticulePosition.value){
                         nextAnim = optionsList[randomBorn(optionsList.length-1)];
                     }
 
-                    this.CbUpdateSelect(nextAnim)}).bind(this),4000);
+                    this.CbUpdateSelect(nextAnim)}).bind(this),6000);
             }
             else{
                 clearInterval(autoIntervalAnimation);
@@ -170,7 +173,17 @@
             pZ =  (Math.cos(p*5)*100) * Math.sin(p*2);
             return Vector3Wrapper(pX, pY, pZ);
         }
-        
+        this.triforce = function(p){
+/*            pX =  (Math.cos(p*5)*100) * Math.cos(p*2);
+            pY = Math.sin(p*5)*100;
+            pZ =  (Math.cos(p*5)*100) * Math.sin(p*2);
+            return Vector3Wrapper(pX, pY, pZ);
+*/
+                var masterPoint = masterPoints[Math.floor(Math.random()*3)];
+                currentPoint.x = (masterPoint.x + currentPoint.x)*0.5;
+                currentPoint.y = (masterPoint.y + currentPoint.y)*0.5;
+                return  Vector3Wrapper(currentPoint.x, currentPoint.y,0);
+        }
         this.leaf = function(p){
             pX = 30 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.cos(p);
             pY = 30 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.sin(p);
@@ -510,6 +523,7 @@ var UiUpdater = function() {
     pMaterial = new THREE.PointCloudMaterial({
         transparent: true,
         opacity: 1,
+        sizeAttenuation : true,
         map: THREE.ImageUtils.loadTexture(
             "./cell.png"
         ),
@@ -562,9 +576,11 @@ var UiUpdater = function() {
     var particleSystem = new THREE.PointCloud(
         particles,
         pMaterial);
-
     onRenderFcts.push(function(){
-        
+        particleSystem.rotation.y += (audioSource.streamData[30]*-1)/6000;
+        particleSystem.rotation.z += (audioSource.streamData[75]*-1)/10000;
+    });
+    onRenderFcts.push(function(){
         particleSystem.geometry.verticesNeedUpdate =true;
         particleSystem.geometry.colorsNeedUpdate =true;
 
@@ -579,7 +595,7 @@ var UiUpdater = function() {
                     particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1)/2);
                 }
                 else{    
-                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1)/2;
+                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1);
                 }
             }
             particleSystem.geometry.colors[i].setRGB(0,0,0);
