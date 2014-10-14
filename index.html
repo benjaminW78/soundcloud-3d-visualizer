@@ -27,7 +27,7 @@
         <audio id="player" controls="" autoplay="" preload autobuffer></audio>
     </div>
     <label>Active Transition AUTO:
-        <input id="transitionAuto" checked  type='checkbox' >
+        <input id="transitionAuto"  checked type='checkbox' >
     </label>
     <label>Active rotation AUTO:
         <input id="rotationAuto"  checked type='checkbox' >
@@ -37,9 +37,11 @@
             <option>inline</option>
             <option>rosace</option>
             <option>leaf</option>
+            <option>eight</option>
             <option>flower</option>
             <option>triforce</option>
             <option>vortex</option>
+            <option>plan</option>
             <option>vortex2</option>
             <option>triangle</option>
         </select>
@@ -80,19 +82,18 @@
             this.transitionAuto.setAttribute("onChange","player.CbUpdateCheckbox(this.checked,this.id)");
             rotation.setAttribute("onChange","player.CbUpdateCheckbox(this.checked,this.id)");
             this.rotationValue = rotation.checked;
-            
+            console.log(this.transitionAuto.checked)
             var domOptionList = choiceParticulePosition.options;
             for (var i=0;i<domOptionList.length;i++){
                 optionsList.push(domOptionList[i].text);
             } 
             if(this.transitionAuto.checked){
-                this.CbUpdateSelect(choiceParticulePosition.value);
+                this.CbUpdateCheckbox(choiceParticulePosition.value);
             }
         }     
 
 
         this.CbUpdateCheckbox = function(value,id){
-            console.log(value,id);
             if(id!=="rotationAuto"){
                 if(value){
                     var nextAnim = optionsList[randomBorn(optionsList.length-1)];
@@ -143,6 +144,9 @@
             one = (one*100)/1000;
             return {avarage1:zero,avarage2:one}
         }
+        var randomBorn = function(born){
+            return Math.round(Math.random()*born)
+        }
 
         this.vortex = function(p){
             pX = Math.sin(p)*p*1;
@@ -157,9 +161,6 @@
             pZ = 0;
             return Vector3Wrapper(pX, pY, pZ);
         }
-        var randomBorn = function(born){
-            return Math.round(Math.random()*born)
-        }
         this.triangle = function(p){
             pX = p;
             pY = Math.cos(p)*-p*1;
@@ -173,34 +174,39 @@
             pZ = 0;
             return Vector3Wrapper(pX, pY, pZ);
         }
-
+        this.plan = function(p){
+            pX = Math.cos(p*2)*-p;
+            pY = Math.cos(p*50)*-p;
+            pZ = 0;
+            return Vector3Wrapper(pX, pY, pZ);
+        }
         this.inline = function(p){
             pX = p+10;
             pY = 0;
             pZ = 0;
             return Vector3Wrapper(pX, pY, pZ);
         }
-
         this.rosace = function(p){
-            pX =  (Math.cos(p*5)*100) * Math.cos(p*2);
-            pY = Math.sin(p*5)*100;
-            pZ =  (Math.cos(p*5)*100) * Math.sin(p*2);
+            pX =  (Math.cos(p*5)*800) * Math.cos(p*2);
+            pY = Math.sin(p*5)*800;
+            pZ =  (Math.cos(p*5)*800) * Math.sin(p*2);
+            return Vector3Wrapper(pX, pY, pZ);
+        }
+        this.eight = function(p){
+            pX =  (Math.cos(p*5)*1000) * Math.cos(p*2);
+            pY = (Math.sin(p*2)*1000);
+            pZ =  (Math.cos(p*5)*1000) * Math.sin(p*2);
             return Vector3Wrapper(pX, pY, pZ);
         }
         this.triforce = function(p){
-/*            pX =  (Math.cos(p*5)*100) * Math.cos(p*2);
-            pY = Math.sin(p*5)*100;
-            pZ =  (Math.cos(p*5)*100) * Math.sin(p*2);
-            return Vector3Wrapper(pX, pY, pZ);
-*/
-                var masterPoint = masterPoints[Math.floor(Math.random()*3)];
-                currentPoint.x = (masterPoint.x + currentPoint.x)*0.5;
-                currentPoint.y = (masterPoint.y + currentPoint.y)*0.5;
-                return  Vector3Wrapper(currentPoint.x, currentPoint.y,0);
+           var masterPoint = masterPoints[Math.floor(Math.random()*3)];
+            currentPoint.x = (masterPoint.x + currentPoint.x)*0.5;
+            currentPoint.y = (masterPoint.y + currentPoint.y)*0.5;
+            return  Vector3Wrapper(currentPoint.x, currentPoint.y,0);
         }
         this.leaf = function(p){
-            pX = 30 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.cos(p);
-            pY = 30 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.sin(p);
+            pX = 100 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.cos(p);
+            pY = 100 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.sin(p);
             pZ = 0;
             return Vector3Wrapper(pX, pY, pZ);
         }
@@ -605,15 +611,15 @@ var UiUpdater = function() {
         for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
         {
             if(player.particulePosition === 'inline'){
-                particleSystem.geometry.vertices[i].y=audioSource.streamData[i]/2;
+                particleSystem.geometry.vertices[i].y=audioSource.streamData[i]*5;
             }
             else{   
                 if(player.particulePosition === "rosace"){
                     
-                    particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1)/2);
+                    particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1));
                 }
                 else{    
-                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1)*2;
+                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1)*5;
                 }
             }
             particleSystem.geometry.colors[i].setRGB(0,0,0);
