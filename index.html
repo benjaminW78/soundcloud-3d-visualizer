@@ -35,7 +35,7 @@
     <label>Selectionne ta geometrie :
         <select id="selectParticulePos" >
             <option>inline</option>
-            <option>rosasse</option>
+            <option>rosace</option>
             <option>leaf</option>
             <option>flower</option>
             <option>triforce</option>
@@ -181,7 +181,7 @@
             return Vector3Wrapper(pX, pY, pZ);
         }
 
-        this.rosasse = function(p){
+        this.rosace = function(p){
             pX =  (Math.cos(p*5)*100) * Math.cos(p*2);
             pY = Math.sin(p*5)*100;
             pZ =  (Math.cos(p*5)*100) * Math.sin(p*2);
@@ -535,8 +535,10 @@ var UiUpdater = function() {
     // set particule cloud object.
     var particles = new THREE.Geometry(),
     pMaterial = new THREE.PointCloudMaterial({
-        transparent: true,
         opacity: 1,
+        blending: THREE.AdditiveBlending,
+        depthTest : false,
+        transparent: true,
         sizeAttenuation : true,
         map: THREE.ImageUtils.loadTexture(
             "./cell.png"
@@ -606,7 +608,7 @@ var UiUpdater = function() {
                 particleSystem.geometry.vertices[i].y=audioSource.streamData[i]/2;
             }
             else{   
-                if(player.particulePosition === "rosasse"){
+                if(player.particulePosition === "rosace"){
                     
                     particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1)/2);
                 }
