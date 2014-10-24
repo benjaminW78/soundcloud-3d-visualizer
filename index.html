@@ -12,701 +12,242 @@
 
     <div style='position: absolute; top: 0px; width: 100%;font-family:arial; font-weight: bolder; padding-top: 5px;'>
     </div>
-<div id="controlPanel" class="hidden">
-    <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
-    <div id="trackInfoPanel" class="hidden">
-        <img id="infoImage" src="">
-        <div id="infoArtist"></div>
-        <div id="infoTrack"></div>
+    <div id="controlPanel" class="hidden">
+        <div id="tab"><a href="#" id="toggleButton"><i class="icon-menu"></i></a></div>
+        <div id="trackInfoPanel" class="hidden">
+            <img id="infoImage" src="">
+            <div id="infoArtist"></div>
+            <div id="infoTrack"></div>
+        </div>
+        <div id="playerControls">
+            <form id="form">
+                <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
+                <button type="submit" id="submit"><i class="icon-play"></i></button><br>
+            </form>
+            <audio id="player" controls="" autoplay="" preload autobuffer></audio>
+        </div>
+        <label>Active Transition AUTO:
+            <input id="transitionAuto"  checked type='checkbox' >
+        </label>
+        <label>Active rotation AUTO:
+            <input id="rotationAuto"  checked type='checkbox' >
+        </label>
+        <label>Selectionne ta geometrie :
+            <select id="selectParticulePos" >
+                <option>inline</option>
+                <option>rosace</option>
+                <option>leaf</option>
+                <option>eight</option>
+                <option>flower</option>
+                <option>triforce</option>
+                <option>vortex</option>
+                <option>plan</option>
+                <option>vortex2</option>
+                <option>triangle</option>
+            </select>
+        </label>
     </div>
-    <div id="playerControls">
-        <form id="form">
-            <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
-            <button type="submit" id="submit"><i class="icon-play"></i></button><br>
-        </form>
-        <audio id="player" controls="" autoplay="" preload autobuffer></audio>
-    </div>
-    <label>Active Transition AUTO:
-        <input id="transitionAuto"  checked type='checkbox' >
-    </label>
-    <label>Active rotation AUTO:
-        <input id="rotationAuto"  checked type='checkbox' >
-    </label>
-    <label>Selectionne ta geometrie :
-        <select id="selectParticulePos" >
-            <option>inline</option>
-            <option>rosace</option>
-            <option>leaf</option>
-            <option>eight</option>
-            <option>flower</option>
-            <option>triforce</option>
-            <option>vortex</option>
-            <option>plan</option>
-            <option>vortex2</option>
-            <option>triangle</option>
-        </select>
-    </label>
-</div>
-<div id="messageBox" class="hidden">
-<script src="//connect.soundcloud.com/sdk.js"></script>
-<script>
-    //////////////////////////////////////////////////////////////////////////////////
-    //      Init
-    //////////////////////////////////////////////////////////////////////////////////
-   /* Function reboot(value){
-
-    }*/
-    var particleCount = 1000;
-    var particleSize = 30;
-    var Player = function Player(params){
-        var self = this;
-        this.particulePosition;
-        this.deltaTime=0;
-        this.speedCoef = 1;
-        this.intervalContener;
-        this.rotationValue;
-        var rotation =document.getElementById("rotationAuto");
-        this.transitionAuto = document.getElementById("transitionAuto");
-        var choiceParticulePosition = document.getElementById("selectParticulePos");
-        var pX,pY,pZ;
-
-        var intervalValue = 400;
-        var optionsList=[];
-        var autoIntervalAnimation;
-        var currentPoint = {x: 0, y:0};
-        var masterPoints = [{x: -50, y: -250}, {x:-250, y:50}, {x:150, y:50}];
-        this.init = function(params){
-            this.particulePosition = (params.particulesPos!==undefined)?params.particulesPos:choiceParticulePosition.value;
-
-            choiceParticulePosition.setAttribute("onChange","player.CbUpdateSelect(this.value)");
-            this.transitionAuto.setAttribute("onChange","player.CbUpdateCheckbox(this.checked,this.id)");
-            rotation.setAttribute("onChange","player.CbUpdateCheckbox(this.checked,this.id)");
-            this.rotationValue = rotation.checked;
-            console.log(this.transitionAuto.checked)
-            var domOptionList = choiceParticulePosition.options;
-            for (var i=0;i<domOptionList.length;i++){
-                optionsList.push(domOptionList[i].text);
-            } 
-            if(this.transitionAuto.checked){
-                this.CbUpdateCheckbox(choiceParticulePosition.value);
-            }
-        }     
-
-
-        this.CbUpdateCheckbox = function(value,id){
-            if(id!=="rotationAuto"){
-                if(value){
-                    var nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                    console.log(choiceParticulePosition.value)
-                    while(nextAnim===choiceParticulePosition.value){
-                        nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                    }
-                    
-                    autoIntervalAnimation = setInterval((function(){
-                        var nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                        while(nextAnim===choiceParticulePosition.value){
-                            nextAnim = optionsList[randomBorn(optionsList.length-1)];
-                        }
-
-                        this.CbUpdateSelect(nextAnim)}).bind(this),6000);
-                }
-                else{
-                    clearInterval(autoIntervalAnimation);
-                }
-            }
-            else{
-                this.rotationValue = value;
-            }
+    <div id="messageBox" class="hidden">
+    <script id="vertexShader" type="toto">
+        uniform int uAnalyzerArray[1000];
+        uniform int random;
+        void main() {
+            vec3 newPosition = position + normal * vec3(uAnalyzerArray[random]);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
         }
-
-        this.CbUpdateSelect = function(value){
-            this.particulePosition = value;
-            this.deltaTime=0;
-            this.intervalContener = setInterval(makeLerp.bind(this,this.randomAvarage()),40);
-        }
-        this.randomAvarage = function(){
-
-            var one=0;
-            var zero=0;
-            for (var x = 0; x<1000;x++){
-            var random = Math.round(Math.random()*1);
-                if(random===0){
-                    zero+=1;
-                }
-                else if (random===1) {
-                    one+=1;
-                }
-                else{
-                    console.log(random,"OUT OF RANGE");
-                }
-            }
-            zero = (zero*100)/1000;
-            one = (one*100)/1000;
-            return {avarage1:zero,avarage2:one}
-        }
-        var randomBorn = function(born){
-            return Math.round(Math.random()*born)
-        }
-
-        this.vortex = function(p){
-            pX = Math.sin(p)*p*1;
-            pY = Math.cos(p)*-p*1;
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
+    </script>
+    <script id="fragmentShader" type="toto">
+       // same name and type as VS
         
-        this.vortex2 = function(p){
-            pX = Math.cos(p*2)*-p;
-            pY = p*Math.sin(2*p);
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        this.triangle = function(p){
-            pX = p;
-            pY = Math.cos(p)*-p*1;
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-
-        this.flower = function(p){
-            pX = Math.cos(p*2)*-p;
-            pY = p;
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        this.plan = function(p){
-            pX = Math.cos(p*2)*-p;
-            pY = Math.cos(p*50)*-p;
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        this.inline = function(p){
-            pX = p+10;
-            pY = 0;
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        this.rosace = function(p){
-            pX =  (Math.cos(p*5)*800) * Math.cos(p*2);
-            pY = Math.sin(p*5)*800;
-            pZ =  (Math.cos(p*5)*800) * Math.sin(p*2);
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        this.eight = function(p){
-            pX =  (Math.cos(p*5)*1000) * Math.cos(p*2);
-            pY = (Math.sin(p*2)*1000);
-            pZ =  (Math.cos(p*5)*1000) * Math.sin(p*2);
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        this.triforce = function(p){
-           var masterPoint = masterPoints[Math.floor(Math.random()*3)];
-            currentPoint.x = (masterPoint.x + currentPoint.x)*0.5;
-            currentPoint.y = (masterPoint.y + currentPoint.y)*0.5;
-            return  Vector3Wrapper(currentPoint.x, currentPoint.y,0);
-        }
-        this.leaf = function(p){
-            pX = 100 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.cos(p);
-            pY = 100 * (2 - Math.sin(-7 * p) - 0.5 * Math.cos(7 * p)) * Math.sin(p);
-            pZ = 0;
-            return Vector3Wrapper(pX, pY, pZ);
-        }
-        var makeLerp = function makeLerp(randomChoice){
-            // debugger
-            // console.log(this.deltaTime)
-            var choice = randomChoice;
-            if(this.deltaTime <1){
-                if(choice.avarage1>choice.avarage2){                
-                    for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
-                    {
-                        // console.log(this[this.particulePosition](i),this.deltaTime);
-                        particleSystem.geometry.vertices[i].lerp(this[this.particulePosition](i),this.deltaTime);
-                    }
-                }
-                else {
-                    for (var i=particleSystem.geometry.vertices.length-1 ; i>0;i--)
-                    {
-                        // console.log(this[this.particulePosition](i),this.deltaTime);
-                        particleSystem.geometry.vertices[i].lerp(this[this.particulePosition](i),this.deltaTime);
-                    }
-
-                }
-            }          
-            else {
-                clearInterval(this.intervalContener);
-            }
-        }
-
-        function Vector3Wrapper(x,y,z){
-
-            return new THREE.Vector3(x,y,z);
-        }
-        
-        this.init(params);
-    }
-
-
-    /*********************************************************************************
-    *SOUNDCLOUD CLASS
-    *********************************************************************************/
-    /**
- * Makes a request to the Soundcloud API and returns the JSON data.
- */
-
-var SoundCloudAudioSource = function(player) {
-    var self = this;
-    var analyser;
-    var audioCtx = new (window.AudioContext || window.webkitAudioContext);
-    analyser = audioCtx.createAnalyser();
-    var source = audioCtx.createMediaElementSource(player);
-    source.connect(analyser);
-    analyser.connect(audioCtx.destination);
-    this.sampleAudioStream = function() {
-        analyser.getByteFrequencyData(self.streamData);
-        // calculate an overall volume value
-        var total = 0;
-        for (var i = 0; i < particleCount; i++) { // get the volume from the first 80 bins, else it gets too loud with treble
-            total += self.streamData[i];
-        }
-        self.volume = total;
-    };
-    // setInterval(sampleAudioStream, 20);
-    // // public properties and methods
-    this.volume = 0;
-    this.streamData = new Uint8Array(particleCount);
-    this.playStream = function(streamUrl) {
-        // get the input stream from the audio element
-        player.addEventListener('ended', function(){
-            self.directStream('coasting');
-        });
-        player.setAttribute('src', streamUrl);
-        player.play();
-    }
-};
-var SoundcloudLoader = function(player,uiUpdater) {
-    var self = this;
-    var client_id = "42ab05e4323be426e3128b784ba36c95"; // to get an ID go to http://developers.soundcloud.com/
-    this.sound = {};
-    this.streamUrl = "";
-    this.errorMessage = "";
-    this.player = player;
-    // this.uiUpdater = uiUpdater;
-
-    /**
-     * Loads the JSON stream data object from the URL of the track (as given in the location bar of the browser when browsing Soundcloud),
-     * and on success it calls the callback passed to it (for example, used to then send the stream_url to the audiosource object).
-     * @param track_url
-     * @param callback
-     */
-    this.loadStream = function(track_url, successCallback, errorCallback) {
-        SC.initialize({
-            client_id: client_id
-        });
-        SC.get('/resolve', { url: track_url ,allow_redirects:false}, function(sound) {
-            if (sound.errors) {
-                self.errorMessage = "";
-                for (var i = 0; i < sound.errors.length; i++) {
-                    self.errorMessage += sound.errors[i].error_message + '<br>';
-                }
-                self.errorMessage += 'Make sure the URL has the correct format: https://soundcloud.com/user/title-of-the-track';
-                errorCallback();
-            } else {
-
-                if(sound.kind=="playlist"){
-                    self.sound = sound;
-                    self.streamPlaylistIndex = 0;
-                    self.streamUrl = function(){
-                        return sound.tracks[self.streamPlaylistIndex].stream_url + '?client_id=' + client_id+"&allow_redirects=False";
-                    }
-                    successCallback();
-                }else{
-                    self.sound = sound;
-                    self.streamUrl = function(){ return sound.stream_url + '?client_id=' + client_id+"&allow_redirects=False"; };
-
-                    successCallback();
-                }
-            }
-        });
-    };
-
-
-    this.directStream = function(direction){
-        if(direction=='toggle'){
-            if (this.player.paused) {
-                this.player.play();
-            } else {
-                this.player.pause();
-            }
-        }
-        else if(this.sound.kind=="playlist"){
-            if(direction=='coasting') {
-                this.streamPlaylistIndex++;
-            }else if(direction=='forward') {
-                if(this.streamPlaylistIndex>=this.sound.track_count-1) this.streamPlaylistIndex = 0;
-                else this.streamPlaylistIndex++;
-            }else{
-                if(this.streamPlaylistIndex<=0) this.streamPlaylistIndex = this.sound.track_count-1;
-                else this.streamPlaylistIndex--;
-            }
-            if(this.streamPlaylistIndex>=0 && this.streamPlaylistIndex<=this.sound.track_count-1) {
-               this.player.setAttribute('src',this.streamUrl());
-               this.uiUpdater.update(this);
-               console.log(this.player)
-               this.player.play();
-            }
-        }
-    }
-
-
-};
-
-/**
- * Class to update the UI when a new sound is loaded
- * @constructor
- */
-var UiUpdater = function() {
-    var controlPanel = document.getElementById('controlPanel');
-    var trackInfoPanel = document.getElementById('trackInfoPanel');
-    var infoImage = document.getElementById('infoImage');
-    var infoArtist = document.getElementById('infoArtist');
-    var infoTrack = document.getElementById('infoTrack');
-    var messageBox = document.getElementById('messageBox');
-
-    this.clearInfoPanel = function() {
-        // first clear the current contents
-        infoArtist.innerHTML = "";
-        infoTrack.innerHTML = "";
-        trackInfoPanel.className = 'hidden';
-    };
-    this.update = function(loader) {
-        // update the track and artist into in the controlPanel
-        var artistLink = document.createElement('a');
-        artistLink.setAttribute('href', loader.sound.user.permalink_url);
-        artistLink.innerHTML = loader.sound.user.username;
-        var trackLink = document.createElement('a');
-        trackLink.setAttribute('href', loader.sound.permalink_url);
-
-        if(loader.sound.kind=="playlist"){
-            trackLink.innerHTML = "<p>" + loader.sound.tracks[loader.streamPlaylistIndex].title + "</p>" + "<p>"+loader.sound.title+"</p>";
-        }else{
-            trackLink.innerHTML = loader.sound.title;
-        }
-
-        var image = loader.sound.artwork_url ? loader.sound.artwork_url : loader.sound.user.avatar_url; // if no track artwork exists, use the user's avatar.
-        infoImage.setAttribute('src', image);
-
-        infoArtist.innerHTML = '';
-        infoArtist.appendChild(artistLink);
-
-        infoTrack.innerHTML = '';
-        infoTrack.appendChild(trackLink);
-
-        // display the track info panel
-        trackInfoPanel.className = '';
-
-        // add a hash to the URL so it can be shared or saved
-        var trackToken = loader.sound.permalink_url.substr(22);
-        window.location = '#' + trackToken;
-    };
-    this.toggleControlPanel = function() {
-        if (controlPanel.className.indexOf('hidden') === 0) {
-            controlPanel.className = '';
-        } else {
-            controlPanel.className = 'hidden';
-        }
-    };
-    this.displayMessage = function(title, message) {
-        messageBox.innerHTML = ''; // reset the contents
-
-        var titleElement = document.createElement('h3');
-        titleElement.innerHTML = title;
-
-        var messageElement = document.createElement('p');
-        messageElement.innerHTML = message;
-
-        var closeButton = document.createElement('a');
-        closeButton.setAttribute('href', '#');
-        closeButton.innerHTML = 'close';
-        closeButton.addEventListener('click', function(e) {
-            e.preventDefault();
-            messageBox.className = 'hidden';
-        });
-
-        messageBox.className = '';
-        // stick them into the container div
-        messageBox.appendChild(titleElement);
-        messageBox.appendChild(messageElement);
-        messageBox.appendChild(closeButton);
-    };
-};
-
-  // var visualizer = new Visualizer();
-    var player =  document.getElementById('player');
-    var uiUpdater = new UiUpdater();
-    var loader = new SoundcloudLoader(player,uiUpdater);
-
-    var audioSource = new SoundCloudAudioSource(player);
-    var form = document.getElementById('form');
-    var loadAndUpdate = function(trackUrl) {
-        loader.loadStream(trackUrl,
-            function() {
-                uiUpdater.clearInfoPanel();
-                audioSource.playStream(loader.streamUrl());
-                uiUpdater.update(loader);
-                // setTimeout(uiUpdater.toggleControlPanel, 3000); // auto-hide the control panel
-            },
-            function() {
-                uiUpdater.displayMessage("Error", loader.errorMessage);
-            });
-    };
-
-    // visualizer.init({
-    //     containerId: 'visualizer',
-    //     audioSource: audioSource
-    // });
-
-
-    uiUpdater.toggleControlPanel();
-    // on load, check to see if there is a track token in the URL, and if so, load that automatically
-    if (window.location.hash) {
-        var trackUrl = 'https://soundcloud.com/' + window.location.hash.substr(1);
-        loadAndUpdate(trackUrl);
-    }
-
-    // handle the form submit event to load the new URL
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        var trackUrl = document.getElementById('input').value;
-        loadAndUpdate(trackUrl);
-    });
-    var toggleButton = document.getElementById('toggleButton')
-    toggleButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        uiUpdater.toggleControlPanel();
-    });
-
-    window.addEventListener("keydown", keyControls, false);
+void main() {
+  gl_FragColor = vec4(1.0,  // R
+                      0.0,  // G
+                      1.0,  // B
+                      1.0); // A
+}
+    </script>
+    <script src="//connect.soundcloud.com/sdk.js"></script>
+    <script src="./js/config.js"></script>
+    <script src="./js/Player.js"></script>
+    <script src="./js/SoundCloud.js"></script>
+    <script src="./js/UiCtrl.js"></script>
+    <script src="./js/threejs/animations/pointCloudParticleAnimation.js"></script>
+    <script>
      
-    function keyControls(e) {
-        switch(e.keyCode) {
-            case 32:
-                // spacebar pressed
-                loader.directStream('toggle');
-                break;
-            case 37:
-                // left key pressed
-                loader.directStream('backward');
-                break;
-            case 39:
-                // right key pressed
-                loader.directStream('forward');
-                break;
-        }   
-    }
+    /***************************************************************************
+    *THREEJS RENDERER INIT
+    *create webgl renderer and camera
+    * *************************************************************************/
+        
+        var renderer    = new THREE.WebGLRenderer({
+            antialias   : true
+        });
+        renderer.setClearColor(new THREE.Color('black'), 0.5)
+        
+        renderer.setSize( window.innerWidth, window.innerHeight );
+        
+        renderer.domElement.id = "canvas";
+        document.body.appendChild( renderer.domElement );
 
+        // array of functions for the rendering loop
+        var onRenderFcts= [];
+        var width=window.innerWidth,
+            height =window.innerHeight;
+        // init scene and camera
+        var scene   = new THREE.Scene();
+        
 
-    // addEventListener()
-    // init renderer
-    var renderer    = new THREE.WebGLRenderer({
-        antialias   : true
-    });
-    renderer.setClearColor(new THREE.Color('black'), 0.5)
-    
-    renderer.setSize( window.innerWidth, window.innerHeight );
-    
-    renderer.domElement.id = "canvas";
-    document.body.appendChild( renderer.domElement );
-
-    // array of functions for the rendering loop
-    var onRenderFcts= [];
-    var width=window.innerWidth,
-        height =window.innerHeight;
-    // init scene and camera
-    var scene   = new THREE.Scene();
-    
-
-    var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 4000);
-    
-    camera.position.set( 443.9767743919909, -107.38990585697634, -2680.4673724727436);
-    camera.rotation.set(-3.0415535640235274, 0.02263886127914203, 3.139320494992936);
-    var controls    = new THREE.OrbitControls(camera)
+        var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 4000);
+        
+        camera.position.set( 443.9767743919909, -107.38990585697634, -2680.4673724727436);
+        camera.rotation.set(-3.0415535640235274, 0.02263886127914203, 3.139320494992936);
+        var controls    = new THREE.OrbitControls(camera)
         controls.autoRotate =true;
 
 
-    var player = new Player({});
-    /**************************************************************************************
-    *
-    *PARTICULES
-    *
-    **************************************************************************************/
-    // set particule cloud object.
-    var particles = new THREE.Geometry(),
-    pMaterial = new THREE.PointCloudMaterial({
-        opacity: 1,
-        blending: THREE.AdditiveBlending,
-        depthTest : false,
-        transparent: true,
-        sizeAttenuation : true,
-        map: THREE.ImageUtils.loadTexture(
-            "./cell.png"
-        ),
-        vertexColors: THREE.VertexColors,
-        sortParticles:true,
-        size: particleSize
-    });
+        var player = new Player({});
+        
+        /**************************************************************************************
+        *PARTICULES
+        * create a pointcloud that contains vertex and move over musique frequency and change their own colors
+        **************************************************************************************/
+        // set particule cloud object.
+        var particles = new THREE.Geometry(),
+        pMaterial = new THREE.PointCloudMaterial({
+            opacity: 1,
+            blending: THREE.AdditiveBlending,
+            depthTest : false,
+            transparent: true,
+            sizeAttenuation : true,
+            map: THREE.ImageUtils.loadTexture(
+                "./cell.png"
+            ),
+            vertexColors: THREE.VertexColors,
+            sortParticles:true,
+            size: particleSize
+        });
 
-    var positionLastCell 
-    // set particule Number inside particule cloud
-    var one=0;
-    var zero=0;
-    for (var x = 0; x<1000;x++){
-    var random = Math.round(Math.random()*1)
-        if(random===0){
-            zero+=1;
+        var positionLastCell 
+        // set particule Number inside particule cloud
+        var one=0;
+        var zero=0;
+
+        for (var x = 0; x<1000;x++){
+        var random = Math.round(Math.random()*1)
+            if(random===0){
+                zero+=1;
+            }
+            else if (random===1) {
+                one+=1;
+            }
+            else{
+                console.log(random,"OUT OF RANGE");
+            }
         }
-        else if (random===1) {
-            one+=1;
+        
+        if((zero*100)/1000>(one*100)/1000){
+
+            for (var p = particleCount; p >0; p--) {
+                var particle = player[player.particulePosition](p);
+                particle.originPos = player[player.particulePosition](p);
+                // add it to the geometry
+                particles.vertices.push(particle);
+            }
         }
         else{
-            console.log(random,"OUT OF RANGE");
+            for (var p = 0; p < particleCount; p++) {        
+                var particle = player[player.particulePosition](p);
+                particle.originPos = player[player.particulePosition](p);
+                // add it to the geometry
+                particles.vertices.push(particle);
+            }
         }
-    }
-    
-    if((zero*100)/1000>(one*100)/1000){
+        
+        // set particules colors
+        var colors = [];
+        for( var i = 0; i < particles.vertices.length; i++ ) {
+            colors[i] = new THREE.Color();
+        }
+        particles.colors = colors;  
+        // create the particle system
+        var particleSystem = new THREE.PointCloud(
+            particles,
+            pMaterial
+        );
+        onRenderFcts.push(function(){
+            if(player.rotationValue){        
+                particleSystem.rotation.y += (audioSource.streamData[30]*-1)/6000;
+                particleSystem.rotation.z += (audioSource.streamData[75]*-1)/10000;
+            }
+        });
+        // add  particule anim over the time look at ./js/animations/pointCloudParticleAnimation.js
+        onRenderFcts.push(pointcloudParticleAnimation);
+        // add  gameobject to current scene
+        scene.add(particleSystem)
 
-        for (var p = particleCount; p >0; p--) {
-            var particle = player[player.particulePosition](p);
-            particle.originPos = player[player.particulePosition](p);
-            // add it to the geometry
-            particles.vertices.push(particle);
-        }
-    }
-    else{
-        for (var p = 0; p < particleCount; p++) {        
-            var particle = player[player.particulePosition](p);
-            particle.originPos = player[player.particulePosition](p);
-            // add it to the geometry
-            particles.vertices.push(particle);
-        }
-    }
-    // set particules colors
-    var colors = [];
-    for( var i = 0; i < particles.vertices.length; i++ ) {
-        colors[i] = new THREE.Color();
-    }
-    particles.colors = colors;  
-    // create the particle system
-    var particleSystem = new THREE.PointCloud(
-        particles,
-        pMaterial);
-    onRenderFcts.push(function(){
-        if(player.rotationValue){        
-            particleSystem.rotation.y += (audioSource.streamData[30]*-1)/6000;
-            particleSystem.rotation.z += (audioSource.streamData[75]*-1)/10000;
-        }
-    });
-    onRenderFcts.push(function(){
-        particleSystem.geometry.verticesNeedUpdate = true;
-        particleSystem.geometry.colorsNeedUpdate = true;
+        /*********************************************************************************
+        *create plane
+        *
+        * *******************************************************************************/
+        // normaleMATERIAL
+        // var material = new THREE.MeshNormalMaterial({
+        //     side: THREE.DoubleSide,
+        //     color: 0xb7ff00, 
+        //     wireframe: true 
+        // });
+// shadermaterial
+        material = new THREE.ShaderMaterial( 
 
-        for (var i=0 ; i<particleSystem.geometry.vertices.length;i++)
         {
-            if(player.particulePosition === 'inline'){
-                particleSystem.geometry.vertices[i].y=audioSource.streamData[i]*5;
-            }
-            else{   
-                if(player.particulePosition === "rosace"){
-                    
-                    particleSystem.geometry.vertices[i].z=particleSystem.geometry.vertices[i].originPos.z+((audioSource.streamData[i]*-1));
+            uniforms: { 
+                analyzerSong: { // float initialized to 0
+                    type: "1iv", 
+                    value: audioSource.streamData 
+                },
+                random: { // float initialized to 0
+                    type: "1i", 
+                    value: 0
                 }
-                else{    
-                    particleSystem.geometry.vertices[i].z=(audioSource.streamData[i]*-1)*5;
-                }
-            }
-            particleSystem.geometry.colors[i].setRGB(0,0,0);
+            },
+            vertexShader: document.getElementById( 'vertexShader' ).textContent,
+            fragmentShader: document.getElementById( 'fragmentShader' ).textContent
+        } );
+        var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000,32), material);
+        plane.rotateX(-3.0415535640235274);
+        plane.overdraw = true;
+        scene.add(plane);
+        //////////////////////////////////////////////////////////////////////////////////
+        //      render the whole thing on the page
+        //////////////////////////////////////////////////////////////////////////////////
 
-           if(audioSource.streamData[i]<100){
-                particleSystem.geometry.colors[i].r = 28/250;
-                particleSystem.geometry.colors[i].g = (audioSource.streamData[i]+90)/250;
-                particleSystem.geometry.colors[i].b = (audioSource.streamData[i]+90)/250;
-            }
-            else if(audioSource.streamData[i]<160&&audioSource.streamData[i]>=100){
-                particleSystem.geometry.colors[i].r= 28/255;
-                particleSystem.geometry.colors[i].g= (audioSource.streamData[i]+50)/255;
-                particleSystem.geometry.colors[i].b= 28/255;
-            }
-            else if(audioSource.streamData[i]>=160&& audioSource.streamData[i]<=200){
-                particleSystem.geometry.colors[i].r= 255/255;
-                particleSystem.geometry.colors[i].g= audioSource.streamData[i]/255;
-                particleSystem.geometry.colors[i].b= 28/255;                
+        // handle window resize
+        window.addEventListener('resize', function(){
+            renderer.setSize( window.innerWidth, window.innerHeight )
+            camera.aspect   = window.innerWidth / window.innerHeight
+            camera.updateProjectionMatrix()     
+        }, false)
 
-            }   
-            else if(audioSource.streamData[i]>200){
-                particleSystem.geometry.colors[i].r= (audioSource.streamData[i]+50)/255;
-                particleSystem.geometry.colors[i].g= 28/255;
-                particleSystem.geometry.colors[i].b= 28/255;
-            }
-        }
-    });
-    scene.add(particleSystem)
-
-    //////////////////////////////////////////////////////////////////////////////////
-    //      add an object in the scene
-    //////////////////////////////////////////////////////////////////////////////////
-
-    // // add a torus   
-    // var geometry = new THREE.TorusKnotGeometry(0.5-0.12, 0.12);
-    // var material = new THREE.MeshNormalMaterial(); 
-    // var mesh = new THREE.Mesh( geometry, material );
-    // scene.add( mesh );
-
-
-    // onRenderFcts.push(function(delta,now){
-    //  mesh.rotation.y += 1*delta;
-    // })
-// IMAGE ON SPHERE
-    // var geometry = new THREE.TorusGeometry( 0.5, 0.2, 16, 100 );
-    // var material = new THREE.MeshBasicMaterial( { color: 0xffff00 } );
-    // var torus = new THREE.Mesh( geometry, material ); 
-    
-    // // scene.add( torus );
-      // add subtle ambient lighting
-      // var ambientLight = new THREE.AmbientLight(0x00044);
-      // scene.add(ambientLight);
-    // scene.add( light );
-
-    // onRenderFcts.push(function(delta,now){
-    //  mesh.rotation.y += 1*delta;
-    // })
-    //////////////////////////////////////////////////////////////////////////////////
-    //      render the whole thing on the page
-    //////////////////////////////////////////////////////////////////////////////////
-
-    // handle window resize
-    window.addEventListener('resize', function(){
-        renderer.setSize( window.innerWidth, window.innerHeight )
-        camera.aspect   = window.innerWidth / window.innerHeight
-        camera.updateProjectionMatrix()     
-    }, false)
-
-    // render the scene
-    onRenderFcts.push(function(){
-        renderer.render( scene, camera );       
-    })
-    
-    // run the rendering loop
-    var lastTimeMsec= null
-    requestAnimationFrame(function animate(nowMsec){
-        // keep looping
-        requestAnimationFrame( animate );
-        // measure time
-        lastTimeMsec    = lastTimeMsec || nowMsec-1000/60
-        var deltaMsec   = Math.min(200, nowMsec - lastTimeMsec)
-        lastTimeMsec    = nowMsec
-        player.deltaTime+=deltaMsec/(2500*player.speedCoef);
-        // console.log(player.deltaTime);
-        audioSource.sampleAudioStream();
-        onRenderFcts.forEach(function(onRenderFct){
-            onRenderFct(deltaMsec/1000, nowMsec/1000)
+        // render the scene
+        onRenderFcts.push(function(){
+            renderer.render( scene, camera );       
         })
-    });
-</script></body>
+        
+        // run the rendering loop
+        var lastTimeMsec= null
+        requestAnimationFrame(function animate(nowMsec){
+            // keep looping
+            requestAnimationFrame( animate );
+            // measure time
+            lastTimeMsec    = lastTimeMsec || nowMsec-1000/60
+            var deltaMsec   = Math.min(200, nowMsec - lastTimeMsec)
+            lastTimeMsec    = nowMsec
+            player.deltaTime+=deltaMsec/(2500*player.speedCoef);
+            material.uniforms["random"].value = Math.round(Math.random()*1000) ;
+            // console.log(player.deltaTime);
+            audioSource.sampleAudioStream();
+            onRenderFcts.forEach(function(onRenderFct){
+                onRenderFct(deltaMsec/1000, nowMsec/1000)
+            })
+        });
+    </script>
+</body>
