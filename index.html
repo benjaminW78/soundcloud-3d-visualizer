@@ -52,19 +52,22 @@
         uniform int uAnalyzerArray[1000];
         uniform int random;
         void main() {
+            
             vec3 newPosition = position + normal * vec3(uAnalyzerArray[random]);
+
             gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
         }
     </script>
     <script id="fragmentShader" type="toto">
        // same name and type as VS
+        uniform float random2;
         
-void main() {
-  gl_FragColor = vec4(1.0,  // R
-                      0.0,  // G
-                      1.0,  // B
-                      1.0); // A
-}
+        void main() {
+          gl_FragColor = vec4(random2,  // R
+                              random2,  // G
+                              random2,  // B
+                              1.0); // A
+        }
     </script>
     <script src="//connect.soundcloud.com/sdk.js"></script>
     <script src="./js/config.js"></script>
@@ -196,7 +199,7 @@ void main() {
         //     wireframe: true 
         // });
 // shadermaterial
-        material = new THREE.ShaderMaterial( 
+       var material = new THREE.ShaderMaterial( 
 
         {
             uniforms: { 
@@ -205,13 +208,18 @@ void main() {
                     value: audioSource.streamData 
                 },
                 random: { // float initialized to 0
-                    type: "1i", 
-                    value: 0
+                    type: "f", 
+                    value: 25
+                },
+                random2: { // float initialized to 0
+                    type: "f", 
+                    value: 0.25
                 }
             },
             vertexShader: document.getElementById( 'vertexShader' ).textContent,
             fragmentShader: document.getElementById( 'fragmentShader' ).textContent
         } );
+        console.assert(audioSource.streamData.length==1000);
         var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000,32), material);
         plane.rotateX(-3.0415535640235274);
         plane.overdraw = true;
@@ -242,7 +250,8 @@ void main() {
             var deltaMsec   = Math.min(200, nowMsec - lastTimeMsec)
             lastTimeMsec    = nowMsec
             player.deltaTime+=deltaMsec/(2500*player.speedCoef);
-            material.uniforms["random"].value = Math.round(Math.random()*1000) ;
+
+            material.uniforms["random2"].value = Math.random() ;
             // console.log(player.deltaTime);
             audioSource.sampleAudioStream();
             onRenderFcts.forEach(function(onRenderFct){
