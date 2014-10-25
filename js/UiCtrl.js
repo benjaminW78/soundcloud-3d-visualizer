@@ -110,7 +110,6 @@ var UiUpdater = function() {
         var trackUrl = document.getElementById('input').value;
         loadAndUpdate(trackUrl);
     });
-
     var toggleButton = document.getElementById('toggleButton')
     toggleButton.addEventListener('click', function(e) {
         e.preventDefault();

@@ -19,7 +19,17 @@
             <div id="infoArtist"></div>
             <div id="infoTrack"></div>
         </div>
-        <div id="playerControls">
+        <div id="playerControls"><label style="background-color:white;padding: 1rem;position: relative;display: inline-block;border: solid 3px black;border-radius: 1rem;">Song ShortCut
+            <button onclick='loadShortCut(this)' style="
+    padding: 0.2rem;
+    background-color: rgb(52, 179, 168);
+    border-radius: 0.5rem;
+"data-url = "https://soundcloud.com/daisuke-sasaki-3/bee-gees-how-deep-is-your-love">bee gees</button>
+            <button onclick='loadShortCut(this)' style="
+    padding: 0.2rem;
+    background-color: rgb(52, 179, 168);
+    border-radius: 0.5rem;
+"data-url = "https://soundcloud.com/nesscontreras/cowboy-bebop-tank">cowboy Bebop</button></label>
             <form id="form">
                 <input id="input" placeholder="Paste Soundcloud URL here (https://soundcloud.com/artist/track)">
                 <button type="submit" id="submit"><i class="icon-play"></i></button><br>
@@ -77,6 +87,10 @@
     <script src="./js/UiCtrl.js"></script>
     <script src="./js/threejs/animations/pointCloudParticleAnimation.js"></script>
     <script>
+
+    function loadShortCut (e){
+        loadAndUpdate(e.getAttribute('data-url'));
+    }
     /***************************************************************************
     *THREEJS RENDERER INIT
     *create webgl renderer and camera
@@ -198,7 +212,7 @@
             color: 0xb7ff00, 
             wireframe: true 
         });
-// shadermaterial
+        // shadermaterial
         function copyAnalyzerToArray(arr){
             var myArray = [];
             for (var i=0;i<200;i++){
