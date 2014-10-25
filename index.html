@@ -49,7 +49,7 @@
     </div>
     <div id="messageBox" class="hidden">
     <script id="vertexShader" type="toto">
-        uniform int uAnalyzerArray[1000];
+        uniform int uAnalyzerArray[200];
         uniform int random;
         void main() {
             
@@ -60,7 +60,9 @@
     </script>
     <script id="fragmentShader" type="toto">
        // same name and type as VS
+        uniform int uAnalyzerArray[200];
         uniform float random2;
+        uniform int random;
         void main() {
           gl_FragColor = vec4(random2,  // R
                               random2,  // G
@@ -75,7 +77,6 @@
     <script src="./js/UiCtrl.js"></script>
     <script src="./js/threejs/animations/pointCloudParticleAnimation.js"></script>
     <script>
-     
     /***************************************************************************
     *THREEJS RENDERER INIT
     *create webgl renderer and camera
@@ -192,22 +193,30 @@
         *
         * *******************************************************************************/
         // normaleMATERIAL
-        // var material = new THREE.MeshNormalMaterial({
-        //     side: THREE.DoubleSide,
-        //     color: 0xb7ff00, 
-        //     wireframe: true 
-        // });
+        var material = new THREE.MeshNormalMaterial({
+            side: THREE.DoubleSide,
+            color: 0xb7ff00, 
+            wireframe: true 
+        });
 // shadermaterial
+        function copyAnalyzerToArray(arr){
+            var myArray = [];
+            for (var i=0;i<200;i++){
+                myArray.push(arr[i]);
+            }
+            return myArray;
+        }
+/*
        var material = new THREE.ShaderMaterial( 
 
         {
             uniforms: { 
                 analyzerSong: { // float initialized to 0
                     type: "1iv", 
-                    value: audioSource.streamData 
+                    value:copyAnalyzerToArray(audioSource.streamData) 
                 },
                 random: { // float initialized to 0
-                    type: "f", 
+                    type: "i", 
                     value: 25
                 },
                 random2: { // float initialized to 0
@@ -217,11 +226,69 @@
             },
             vertexShader: document.getElementById( 'vertexShader' ).textContent,
             fragmentShader: document.getElementById( 'fragmentShader' ).textContent
-        } );
-        console.assert(audioSource.streamData.length==1000);
-        var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000,32), material);
+        } );*/
+        
+        var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000,500), material);
+          onRenderFcts.push(function(){
+            if(player.rotationValue){        
+                plane.rotation.y += (audioSource.streamData[30]*-1)/6000;
+                plane.rotation.z += (audioSource.streamData[75]*-1)/10000;
+            }
+        });
         plane.rotateX(-3.0415535640235274);
         plane.overdraw = true;
+        
+    // set particules colors
+        var colors = [];
+        for( var i = 0; i < plane.geometry.vertices.length; i++ ) {
+            colors[i] = new THREE.Color();
+        }
+        plane.geometry.colors = colors;  
+
+        onRenderFcts.push(function(){
+        plane.geometry.verticesNeedUpdate = true;
+        plane.geometry.colorsNeedUpdate = true;
+
+        for (var i=0 ; i<plane.geometry.vertices.length;i++)
+        {
+            // if(player.particulePosition === 'inline'){
+            //     plane.geometry.vertices[i].y=audioSource.streamData[i]*5;
+            // }
+            // else{   
+            //     if(player.particulePosition === "rosace"){
+                    
+                    plane.geometry.vertices[i].z=(audioSource.streamData[i]*5);
+                // }
+                // else{    
+                //     plane.geometry.vertices[i].z=(audioSource.streamData[i]*-1)*5;
+                // }
+            // }
+            plane.geometry.colors[i].setRGB(0,0,0);
+
+           if(audioSource.streamData[i]<100){
+                plane.geometry.colors[i].r = 28/250;
+                plane.geometry.colors[i].g = (audioSource.streamData[i]+90)/250;
+                plane.geometry.colors[i].b = (audioSource.streamData[i]+90)/250;
+            }
+            else if(audioSource.streamData[i]<160&&audioSource.streamData[i]>=100){
+                plane.geometry.colors[i].r= 28/255;
+                plane.geometry.colors[i].g= (audioSource.streamData[i]+50)/255;
+                plane.geometry.colors[i].b= 28/255;
+            }
+            else if(audioSource.streamData[i]>=160&& audioSource.streamData[i]<=200){
+                plane.geometry.colors[i].r= 255/255;
+                plane.geometry.colors[i].g= audioSource.streamData[i]/255;
+                plane.geometry.colors[i].b= 28/255;                
+
+            }   
+            else if(audioSource.streamData[i]>200){
+                plane.geometry.colors[i].r= (audioSource.streamData[i]+50)/255;
+                plane.geometry.colors[i].g= 28/255;
+                plane.geometry.colors[i].b= 28/255;
+            }
+          
+        }        });
+
         scene.add(plane);
         //////////////////////////////////////////////////////////////////////////////////
         //      render the whole thing on the page
@@ -250,7 +317,9 @@
             lastTimeMsec    = nowMsec
             player.deltaTime+=deltaMsec/(2500*player.speedCoef);
 
-            material.uniforms["random2"].value = Math.random() ;
+            // material.uniforms["random2"].value = Math.random() ;
+            // material.uniforms["analyzerSong"].value = copyAnalyzerToArray(audioSource.streamData);
+            // material.uniforms["random"].value = Math.round(Math.random()*256) ;
             // console.log(player.deltaTime);
             audioSource.sampleAudioStream();
             onRenderFcts.forEach(function(onRenderFct){
