@@ -62,7 +62,7 @@
         uniform int uAnalyzerArray[200];
         uniform int random;
         void main() {
-            
+
             vec3 newPosition = position + normal * vec3(uAnalyzerArray[random]);
 
             gl_Position = projectionMatrix * modelViewMatrix * vec4( newPosition, 1.0 );
@@ -95,14 +95,14 @@
     *THREEJS RENDERER INIT
     *create webgl renderer and camera
     * *************************************************************************/
-        
+
         var renderer    = new THREE.WebGLRenderer({
             antialias   : true
         });
         renderer.setClearColor(new THREE.Color('black'), 0.5)
-        
+
         renderer.setSize( window.innerWidth, window.innerHeight );
-        
+
         renderer.domElement.id = "canvas";
         document.body.appendChild( renderer.domElement );
 
@@ -112,10 +112,10 @@
             height =window.innerHeight;
         // init scene and camera
         var scene   = new THREE.Scene();
-        
+
 
         var camera  = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.01, 4000);
-        
+
         camera.position.set( 443.9767743919909, -107.38990585697634, -2680.4673724727436);
         camera.rotation.set(-3.0415535640235274, 0.02263886127914203, 3.139320494992936);
         var controls    = new THREE.OrbitControls(camera)
@@ -123,7 +123,7 @@
 
 
         var player = new Player({});
-        
+
         /**************************************************************************************
         *PARTICULES
         * create a pointcloud that contains vertex and move over musique frequency and change their own colors
@@ -144,7 +144,7 @@
             size: particleSize
         });
 
-        var positionLastCell 
+        var positionLastCell
         // set particule Number inside particule cloud
         var one=0;
         var zero=0;
@@ -161,7 +161,7 @@
                 console.log(random,"OUT OF RANGE");
             }
         }
-        
+
         if((zero*100)/1000>(one*100)/1000){
 
             for (var p = particleCount; p >0; p--) {
@@ -172,27 +172,27 @@
             }
         }
         else{
-            for (var p = 0; p < particleCount; p++) {        
+            for (var p = 0; p < particleCount; p++) {
                 var particle = player[player.particulePosition](p);
                 particle.originPos = player[player.particulePosition](p);
                 // add it to the geometry
                 particles.vertices.push(particle);
             }
         }
-        
+
         // set particules colors
         var colors = [];
         for( var i = 0; i < particles.vertices.length; i++ ) {
             colors[i] = new THREE.Color();
         }
-        particles.colors = colors;  
+        particles.colors = colors;
         // create the particle system
         var particleSystem = new THREE.PointCloud(
             particles,
             pMaterial
         );
         onRenderFcts.push(function(){
-            if(player.rotationValue){        
+            if(player.rotationValue){
                 particleSystem.rotation.y += (audioSource.streamData[30]*-1)/6000;
                 particleSystem.rotation.z += (audioSource.streamData[75]*-1)/10000;
             }
@@ -209,8 +209,8 @@
         // normaleMATERIAL
         var material = new THREE.MeshNormalMaterial({
             side: THREE.DoubleSide,
-            color: 0xb7ff00, 
-            wireframe: true 
+            color: 0xb7ff00,
+            wireframe: true
         });
         // shadermaterial
         function copyAnalyzerToArray(arr){
@@ -221,43 +221,43 @@
             return myArray;
         }
 /*
-       var material = new THREE.ShaderMaterial( 
+       var material = new THREE.ShaderMaterial(
 
         {
-            uniforms: { 
+            uniforms: {
                 analyzerSong: { // float initialized to 0
-                    type: "1iv", 
-                    value:copyAnalyzerToArray(audioSource.streamData) 
+                    type: "1iv",
+                    value:copyAnalyzerToArray(audioSource.streamData)
                 },
                 random: { // float initialized to 0
-                    type: "i", 
+                    type: "i",
                     value: 25
                 },
                 random2: { // float initialized to 0
-                    type: "f", 
+                    type: "f",
                     value: 0.25
                 }
             },
             vertexShader: document.getElementById( 'vertexShader' ).textContent,
             fragmentShader: document.getElementById( 'fragmentShader' ).textContent
         } );*/
-        
+
         var plane = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000,500), material);
           onRenderFcts.push(function(){
-            if(player.rotationValue){        
+            if(player.rotationValue){
                 plane.rotation.y += (audioSource.streamData[30]*-1)/6000;
                 plane.rotation.z += (audioSource.streamData[75]*-1)/10000;
             }
         });
         plane.rotateX(-3.0415535640235274);
         plane.overdraw = true;
-        
+
     // set particules colors
         var colors = [];
         for( var i = 0; i < plane.geometry.vertices.length; i++ ) {
             colors[i] = new THREE.Color();
         }
-        plane.geometry.colors = colors;  
+        plane.geometry.colors = colors;
 
         onRenderFcts.push(function(){
         plane.geometry.verticesNeedUpdate = true;
@@ -268,12 +268,12 @@
             // if(player.particulePosition === 'inline'){
             //     plane.geometry.vertices[i].y=audioSource.streamData[i]*5;
             // }
-            // else{   
+            // else{
             //     if(player.particulePosition === "rosace"){
-                    
+
                     plane.geometry.vertices[i].z=(audioSource.streamData[i]*5);
                 // }
-                // else{    
+                // else{
                 //     plane.geometry.vertices[i].z=(audioSource.streamData[i]*-1)*5;
                 // }
             // }
@@ -292,15 +292,15 @@
             else if(audioSource.streamData[i]>=160&& audioSource.streamData[i]<=200){
                 plane.geometry.colors[i].r= 255/255;
                 plane.geometry.colors[i].g= audioSource.streamData[i]/255;
-                plane.geometry.colors[i].b= 28/255;                
+                plane.geometry.colors[i].b= 28/255;
 
-            }   
+            }
             else if(audioSource.streamData[i]>200){
                 plane.geometry.colors[i].r= (audioSource.streamData[i]+50)/255;
                 plane.geometry.colors[i].g= 28/255;
                 plane.geometry.colors[i].b= 28/255;
             }
-          
+
         }        });
 
         scene.add(plane);
@@ -312,14 +312,14 @@
         window.addEventListener('resize', function(){
             renderer.setSize( window.innerWidth, window.innerHeight )
             camera.aspect   = window.innerWidth / window.innerHeight
-            camera.updateProjectionMatrix()     
+            camera.updateProjectionMatrix()
         }, false)
 
         // render the scene
         onRenderFcts.push(function(){
-            renderer.render( scene, camera );       
+            renderer.render( scene, camera );
         })
-        
+
         // run the rendering loop
         var lastTimeMsec= null
         requestAnimationFrame(function animate(nowMsec){
