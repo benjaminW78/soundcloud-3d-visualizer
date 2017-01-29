@@ -1,20 +1,14 @@
-## Boilerplate for three.js on desktop and mobile
+# ThreeJS 3D audio visualizer
+## made by winckell benjamin during school project
+Project based on this [boilerplate for three.js](http://jeromeetienne.github.io/threejsboilerplate/index.html) or look at [its source](https://github.com/jeromeetienne/threejsboilerplate/blob/master/index.html).
 
-Here is a boilerplate for three.js. It is working on desktop and on mobile. 
-this include android and ios.
-
-Try out the [boilerplate for three.js](http://jeromeetienne.github.io/threejsboilerplate/index.html) or look at [its source](https://github.com/jeromeetienne/threejsboilerplate/blob/master/index.html).
-
-
-## [DEMO](http://jeromeetienne.github.io/threejsboilerplate/index.html)
+# [DEMO](http://bwinckell.com/projets/threejsaudio/)
 
 ## A Screenshot
-[![screenshot](https://cloud.githubusercontent.com/assets/252962/4397369/9f9c844c-4441-11e4-9bd1-daa99a79a4d0.jpg)](http://jeromeetienne.github.io/threejsboilerplate/index.html)
+![screenshot1](./assets/screenshot1.png)
+![screenshot2](./assets/screenshot2.png)
 
-## Variants
-
-
-* If you like [require.js](http://requirejs.org/), here is a [boilerplate variant with require.js](http://jeromeetienne.github.io/threejsboilerplate/boilerplate-requirejs.html) - [source](https://github.com/jeromeetienne/threejsboilerplate/blob/master/boilerplate-requirejs.html).
-
+##Aknowledgement
+thanks to [jérome Etienne](jeromeetienne.github.io) for his advises during our sessions on threeJS
 ## License
 Released under [MIT license](https://github.com/jeromeetienne/threejsboilerplate/blob/master/LICENSE)
