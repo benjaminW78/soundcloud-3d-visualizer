@@ -117,7 +117,7 @@ var UiUpdater = function() {
     });
 
     window.addEventListener("keydown", keyControls, false);
-     
+
     function keyControls(e) {
         switch(e.keyCode) {
             case 32:
@@ -132,5 +132,5 @@ var UiUpdater = function() {
                 // right key pressed
                 loader.directStream('forward');
                 break;
-        }   
+        }
     }

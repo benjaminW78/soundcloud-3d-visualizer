@@ -68,12 +68,12 @@ var SoundcloudLoader = function(player,uiUpdater) {
                     self.sound = sound;
                     self.streamPlaylistIndex = 0;
                     self.streamUrl = function(){
-                        return sound.tracks[self.streamPlaylistIndex].stream_url + '?client_id=' + client_id+"&allow_redirects=False";
+                        return sound.tracks[self.streamPlaylistIndex].stream_url + '?client_id=' + client_id+"&allow_redirects=false";
                     }
                     successCallback();
                 }else{
                     self.sound = sound;
-                    self.streamUrl = function(){ return sound.stream_url + '?client_id=' + client_id+"&allow_redirects=False"; };
+                    self.streamUrl = function(){ return sound.stream_url + '?client_id=' + client_id+"&allow_redirects=false"; };
 
                     successCallback();
                 }
