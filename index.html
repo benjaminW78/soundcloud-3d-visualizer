@@ -144,7 +144,7 @@
                     transparent    : true,
                     sizeAttenuation: true,
                     map            : THREE.ImageUtils.loadTexture(
-                            "./cell.png"
+                            "./assets/cell.png"
                     ),
                     vertexColors   : THREE.VertexColors,
                     sortParticles  : true,
@@ -194,7 +194,7 @@
         }
         particles.colors = colors;
         // create the particle system
-        var particleSystem = new THREE.PointCloud(
+            var particleSystem = new THREE.PointCloud(
                 particles,
                 pMaterial
         );
